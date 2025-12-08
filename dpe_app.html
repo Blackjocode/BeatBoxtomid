@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Saisie DPE - Mode "Pièce par Pièce"</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 1200px; margin: 0 auto; display: flex; gap: 20px; }
+        .editor, .preview { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); flex: 1; }
+        h2 { border-bottom: 2px solid #4285f4; padding-bottom: 10px; color: #4285f4; }
+
+        .piece-card { border: 1px solid #ddd; border-radius: 8px; margin-bottom: 15px; padding: 15px; background: #fafafa; }
+        .mur-card { border-left: 4px solid #34a853; margin: 10px 0 10px 20px; padding: 10px; background: white; border-radius: 4px; border: 1px solid #eee; }
+        .fenetre-tag { display: inline-block; background: #e8f0fe; color: #1967d2; padding: 4px 8px; border-radius: 12px; font-size: 0.85em; margin-top: 5px; border: 1px solid #d2e3fc; }
+
+        button { cursor: pointer; border: none; padding: 8px 12px; border-radius: 4px; font-weight: bold; transition: 0.2s; }
+        .btn-add { background: #4285f4; color: white; }
+        .btn-add-mur { background: #34a853; color: white; font-size: 0.9em; }
+        .btn-add-fenetre { background: #fbbc04; color: black; font-size: 0.8em; }
+        .btn-gen { background: #ea4335; color: white; width: 100%; font-size: 1.2em; padding: 15px; margin-top: 20px; }
+
+        button:hover { opacity: 0.9; transform: translateY(-1px); }
+
+        textarea { width: 100%; height: 400px; font-family: monospace; background: #2d2d2d; color: #a9b7c6; border: none; padding: 10px; border-radius: 4px; margin-top: 10px; }
+
+        label { display: block; margin-top: 5px; font-weight: 500; font-size: 0.9em; }
+        select, input { width: 100%; padding: 5px; margin-bottom: 5px; border: 1px solid #ccc; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="editor">
+        <h2>🏗️ Saisie du Logement</h2>
+        <div id="pieces-container"></div>
+        <button class="btn-add" onclick="app.ajouterPiece()">+ Ajouter une Pièce</button>
+    </div>
+
+    <div class="preview">
+        <h2>💾 Sortie XML (DPE V2)</h2>
+        <p>Génère le format compatible API ADEME avec gestion automatique des références et ponts thermiques.</p>
+        <button class="btn-gen" onclick="app.genererXML()">GÉNÉRER LE FICHIER XML</button>
+        <textarea id="xml-output" readonly>Le XML apparaîtra ici...</textarea>
+    </div>
+</div>
+
+<script>
+    // --- 1. MOTEUR LOGIQUE (Le cerveau) ---
+    class DPEApplication {
+        constructor() {
+            this.pieces = [];
+            this.render();
+        }
+
+        // Générateur d'ID unique (simule les références LNC du XML)
+        generateID(prefix) {
+            return `${prefix}_${new Date().getTime()}_${Math.floor(Math.random() * 10000)}`;
+        }
+
+        ajouterPiece() {
+            this.pieces.push({
+                id: this.generateID("PIECE"),
+                nom: "Nouvelle Pièce",
+                surface: 0,
+                chauffage: "0", // Aucun par défaut
+                murs: []
+            });
+            this.render();
+        }
+
+        ajouterMur(indexPiece) {
+            this.pieces[indexPiece].murs.push({
+                id: this.generateID("MUR"),
+                orientation: "2", // Nord par défaut
+                materiau: "2", // Pierre par défaut
+                epaisseur: 50,
+                surface: 10,
+                ouvertures: []
+            });
+            this.render();
+        }
+
+        ajouterFenetre(indexPiece, indexMur) {
+            this.pieces[indexPiece].murs[indexMur].ouvertures.push({
+                id: this.generateID("BAIE"),
+                type: "Fenêtre PVC",
+                surface: 1.5,
+                vitrage: "2" // Double
+            });
+            this.render();
+        }
+
+        // --- 2. INTERFACE (Le visuel) ---
+        render() {
+            const container = document.getElementById('pieces-container');
+            container.innerHTML = '';
+
+            this.pieces.forEach((piece, pIndex) => {
+                const pDiv = document.createElement('div');
+                pDiv.className = 'piece-card';
+                pDiv.innerHTML = `
+                    <label>Nom de la pièce : <input type="text" value="${piece.nom}" onchange="app.updatePiece(${pIndex}, 'nom', this.value)"></label>
+                    <label>Système de Chauffage :
+                        <select onchange="app.updatePiece(${pIndex}, 'chauffage', this.value)">
+                            <option value="0" ${piece.chauffage == "0" ? 'selected' : ''}>Aucun</option>
+                            <option value="1" ${piece.chauffage == "1" ? 'selected' : ''}>Radiateur Électrique</option>
+                            <option value="2" ${piece.chauffage == "2" ? 'selected' : ''}>Chaudière Gaz Standard</option>
+                            <option value="3" ${piece.chauffage == "3" ? 'selected' : ''}>Chaudière Gaz Condensation</option>
+                            <option value="4" ${piece.chauffage == "4" ? 'selected' : ''}>Pompe à Chaleur (Air/Eau)</option>
+                            <option value="5" ${piece.chauffage == "5" ? 'selected' : ''}>Poêle à Bois</option>
+                        </select>
+                    </label>
+
+                    <div id="murs-container-${pIndex}"></div>
+                    <div style="text-align:right; margin-top:10px;">
+                        <button class="btn-add-mur" onclick="app.ajouterMur(${pIndex})">+ Ajouter un Mur</button>
+                    </div>
+                `;
+
+                piece.murs.forEach((mur, mIndex) => {
+                    const mDiv = document.createElement('div');
+                    mDiv.className = 'mur-card';
+                    mDiv.innerHTML = `
+                        <strong>🧱 Mur ${this.getOrientationLabel(mur.orientation)}</strong>
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
+                            <label>Surface (m²)<input type="number" value="${mur.surface}" onchange="app.updateMur(${pIndex}, ${mIndex}, 'surface', this.value)"></label>
+                            <label>Orientation
+                                <select onchange="app.updateMur(${pIndex}, ${mIndex}, 'orientation', this.value)">
+                                    <option value="1" ${mur.orientation == 1 ? 'selected' : ''}>Sud</option>
+                                    <option value="2" ${mur.orientation == 2 ? 'selected' : ''}>Nord</option>
+                                    <option value="3" ${mur.orientation == 3 ? 'selected' : ''}>Est</option>
+                                    <option value="4" ${mur.orientation == 4 ? 'selected' : ''}>Ouest</option>
+                                </select>
+                            </label>
+                        </div>
+
+                        <div id="fenetres-list">
+                            ${mur.ouvertures.map(f => `<span class="fenetre-tag">🪟 ${f.type} (${f.surface}m²)</span>`).join('')}
+                        </div>
+                        <button class="btn-add-fenetre" onclick="app.ajouterFenetre(${pIndex}, ${mIndex})">+ Ajouter Fenêtre</button>
+                    `;
+                    pDiv.querySelector(`#murs-container-${pIndex}`).appendChild(mDiv);
+                });
+
+                container.appendChild(pDiv);
+            });
+        }
+
+        // Helpers update (simplifiés)
+        updatePiece(idx, key, val) { this.pieces[idx][key] = val; }
+        updateMur(pIdx, mIdx, key, val) { this.pieces[pIdx].murs[mIdx][key] = val; this.render(); }
+        getOrientationLabel(id) { const map = {1:'Sud', 2:'Nord', 3:'Est', 4:'Ouest'}; return map[id] || ''; }
+
+
+        // --- 3. GÉNÉRATEUR XML (La logique complexe) ---
+        genererXML() {
+            let xmlMurs = '';
+            let xmlBaies = '';
+            let xmlPonts = '';
+            let xmlChauffage = '';
+
+            this.pieces.forEach(piece => {
+                // Génération Chauffage
+                if (piece.chauffage && piece.chauffage !== "0") {
+                    const idInstall = this.generateID("INSTALL");
+                    const idEmetteur = this.generateID("EMETTEUR");
+                    const mapChauffage = {
+                        "1": "Radiateur Électrique",
+                        "2": "Chaudière Gaz Standard",
+                        "3": "Chaudière Gaz Condensation",
+                        "4": "Pompe à Chaleur (Air/Eau)",
+                        "5": "Poêle à Bois"
+                    };
+
+                    xmlChauffage += `
+        <installation_chauffage>
+            <donnee_entree>
+                <description>${mapChauffage[piece.chauffage]} - ${piece.nom}</description>
+                <reference>${idInstall}</reference>
+                <type_installation_id>${piece.chauffage}</type_installation_id>
+            </donnee_entree>
+        </installation_chauffage>
+        <emetteur_chauffage>
+            <donnee_entree>
+                <description>Emetteur dans ${piece.nom}</description>
+                <reference>${idEmetteur}</reference>
+                <reference_installation_chauffage>${idInstall}</reference_installation_chauffage>
+            </donnee_entree>
+        </emetteur_chauffage>`;
+                }
+
+                piece.murs.forEach(mur => {
+                    // Création Mur
+                    xmlMurs += `
+        <mur>
+          <donnee_entree>
+            <description>Mur ${this.getOrientationLabel(mur.orientation)} - ${piece.nom}</description>
+            <reference>${mur.id}</reference>
+            <enum_orientation_id>${mur.orientation}</enum_orientation_id>
+            <surface_paroi_totale>${mur.surface}</surface_paroi_totale>
+            <epaisseur_structure>${mur.epaisseur}</epaisseur_structure>
+            <enum_materiaux_structure_mur_id>${mur.materiau}</enum_materiaux_structure_mur_id>
+            <enum_type_isolation_id>2</enum_type_isolation_id>
+          </donnee_entree>
+        </mur>`;
+
+                    // Traitement des enfants (Fenêtres)
+                    mur.ouvertures.forEach(fen => {
+                        // Création Baie
+                        xmlBaies += `
+        <baie_vitree>
+          <donnee_entree>
+            <description>${fen.type} sur Mur ${this.getOrientationLabel(mur.orientation)}</description>
+            <reference>${fen.id}</reference>
+            <reference_paroi>${mur.id}</reference_paroi> <surface_totale_baie>${fen.surface}</surface_totale_baie>
+            <enum_type_vitrage_id>${fen.vitrage}</enum_type_vitrage_id>
+          </donnee_entree>
+        </baie_vitree>`;
+
+                        // Création Automatique Pont Thermique (Mur/Fenêtre)
+                        xmlPonts += `
+        <pont_thermique>
+          <donnee_entree>
+            <description>PT ${this.getOrientationLabel(mur.orientation)} / ${fen.type}</description>
+            <reference>${this.generateID("PT")}</reference>
+            <reference_1>${fen.id}</reference_1>
+            <reference_2>${mur.id}</reference_2>
+            <tv_pont_thermique_id>75</tv_pont_thermique_id>
+            <l>${(Math.sqrt(fen.surface)*4).toFixed(2)}</l> </donnee_entree>
+        </pont_thermique>`;
+                    });
+                });
+            });
+
+            // Enveloppe XML complète
+            const finalXML = `<dpe xmlns:xsd="http://www.w3.org/2001/XMLSchema" version="2">
+  <administratif>
+    <date_visite_diagnostiqueur>${new Date().toISOString().split('T')[0]}</date_visite_diagnostiqueur>
+  </administratif>
+  <logement>
+    <enveloppe>
+      <mur_collection>${xmlMurs}
+      </mur_collection>
+      <baie_vitree_collection>${xmlBaies}
+      </baie_vitree_collection>
+      <pont_thermique_collection>${xmlPonts}
+      </pont_thermique_collection>
+    </enveloppe>
+    <installation_chauffage_collection>${xmlChauffage}
+    </installation_chauffage_collection>
+  </logement>
+</dpe>`;
+
+            document.getElementById('xml-output').value = finalXML;
+        }
+    }
+
+    // Initialisation
+    const app = new DPEApplication();
+</script>
+
+</body>
+</html>

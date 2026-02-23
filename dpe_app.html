@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logiciel DPE Simplifié - Saisie Pièce par Pièce</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+        }
+        h1, h2, h3, h4 {
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .section {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #fafafa;
+        }
+        .room {
+            margin-bottom: 15px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            background-color: #e9e9e9;
+        }
+        .element-group {
+            margin-left: 10px;
+            margin-bottom: 10px;
+            padding: 10px;
+            border-left: 4px solid #007bff;
+            background-color: #fff;
+        }
+        .element-item {
+            border-bottom: 1px solid #eee;
+            padding: 5px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        label {
+            display: inline-block;
+            font-weight: bold;
+            margin-right: 5px;
+        }
+        input, select {
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            width: 120px;
+        }
+        button {
+            padding: 5px 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button.remove {
+            background-color: #dc3545;
+            padding: 3px 8px;
+            font-size: 0.8em;
+        }
+        button.remove:hover {
+            background-color: #c82333;
+        }
+        #results {
+            background-color: #e2f0d9;
+            border: 1px solid #c3e6cb;
+            padding: 20px;
+        }
+        .result-box {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+        }
+        .result-item {
+            text-align: center;
+            margin: 10px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            min-width: 150px;
+        }
+        .dpe-label {
+            font-size: 3em;
+            font-weight: bold;
+            display: inline-block;
+            padding: 10px 20px;
+            border-radius: 5px;
+            color: white;
+            text-shadow: 1px 1px 2px black;
+            margin-top: 10px;
+        }
+        .class-A { background-color: #009933; }
+        .class-B { background-color: #33cc33; }
+        .class-C { background-color: #ccff33; color: black; text-shadow: none; }
+        .class-D { background-color: #ffff33; color: black; text-shadow: none; }
+        .class-E { background-color: #ffcc00; }
+        .class-F { background-color: #ff9900; }
+        .class-G { background-color: #ff3300; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Logiciel DPE - Saisie Pièce par Pièce</h1>
+
+    <!-- Building General Data -->
+    <div class="section" id="building-data">
+        <h2>Données Générales du Bâtiment</h2>
+        <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+            <div>
+                <label>Altitude (m):</label>
+                <input type="number" id="altitude" value="0" onchange="building.altitude=this.value">
+            </div>
+            <div>
+                <label>Année Construction:</label>
+                <input type="number" id="construction-year" value="1990" onchange="building.constructionYear=this.value">
+            </div>
+            <div>
+                <label>Zone Climatique:</label>
+                <select id="climate-zone" onchange="building.climateZone=this.value">
+                    <option value="H1a">H1a</option>
+                    <option value="H1b">H1b</option>
+                    <option value="H1c">H1c</option>
+                    <option value="H2a">H2a</option>
+                    <option value="H2b">H2b</option>
+                    <option value="H2c">H2c</option>
+                    <option value="H2d">H2d</option>
+                    <option value="H3">H3</option>
+                </select>
+            </div>
+            <div>
+                <label>Surface Habitable (m²):</label>
+                <input type="number" id="shab" value="100" onchange="building.shab=this.value">
+            </div>
+            <div>
+                <label>Hauteur sous plafond (m):</label>
+                <input type="number" id="hsp" value="2.5" onchange="building.hsp=this.value">
+            </div>
+        </div>
+    </div>
+
+    <!-- Systems Section -->
+    <div class="section" id="systems-data">
+        <h2>Systèmes</h2>
+        <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+            <div>
+                <label>Type Chauffage:</label>
+                <select id="heating-type" onchange="building.systems.heating=this.value">
+                    <option value="electric">Électrique Direct</option>
+                    <option value="gas_boiler_std">Chaudière Gaz Standard</option>
+                    <option value="gas_boiler_cond">Chaudière Gaz Condensation</option>
+                    <option value="oil_boiler">Chaudière Fioul</option>
+                    <option value="heat_pump">Pompe à Chaleur (Air/Eau)</option>
+                    <option value="wood_stove">Poêle à Bois</option>
+                </select>
+            </div>
+            <div>
+                <label>Type ECS:</label>
+                <select id="dhw-type" onchange="building.systems.dhw=this.value">
+                    <option value="electric_cumulus">Cumulus Électrique</option>
+                    <option value="gas_instant">Chauffe-eau Gaz Instantané</option>
+                    <option value="thermodynamic">Chauffe-eau Thermodynamique</option>
+                    <option value="connected">Relié au Chauffage</option>
+                </select>
+            </div>
+             <div>
+                <label>Ventilation:</label>
+                <select id="ventilation-type" onchange="building.systems.ventilation=this.value">
+                    <option value="natural">Naturelle</option>
+                    <option value="vmc_sf_auto">VMC Simple Flux Autoréglable</option>
+                    <option value="vmc_sf_hygro">VMC Simple Flux Hygro A/B</option>
+                    <option value="vmc_df">VMC Double Flux</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rooms Section -->
+    <div class="section" id="rooms-container">
+        <h2>Saisie Pièce par Pièce</h2>
+        <div id="rooms-list"></div>
+        <button onclick="addRoom()" style="margin-top: 10px; font-size: 1.1em;">+ Ajouter une Pièce</button>
+    </div>
+
+    <!-- Results Section -->
+    <div class="section" id="results">
+        <h2>Résultats 3CL (Estimation)</h2>
+        <button onclick="calculateDPE()" style="font-size: 1.2em; padding: 10px 20px; background-color: #28a745;">Lancer le Calcul</button>
+        <div id="calculation-output" style="margin-top: 20px; display: none;">
+            <div class="result-box">
+                <div class="result-item">
+                    <h4>Déperditions (Ht)</h4>
+                    <p><span id="res-ht">0</span> W/K</p>
+                </div>
+                <div class="result-item">
+                    <h4>Besoin Chauffage</h4>
+                    <p><span id="res-heat-needs">0</span> kWh/an</p>
+                </div>
+                <div class="result-item">
+                    <h4>Besoin ECS</h4>
+                    <p><span id="res-dhw-needs">0</span> kWh/an</p>
+                </div>
+                <div class="result-item">
+                    <h4>Conso. Énergie Primaire</h4>
+                    <p><span id="res-cep">0</span> kWh/m²/an</p>
+                    <div id="dpe-grade" class="dpe-label class-G">G</div>
+                </div>
+                <div class="result-item">
+                    <h4>Émissions CO2</h4>
+                    <p><span id="res-ges">0</span> kgCO2/m²/an</p>
+                    <div id="ges-grade" class="dpe-label class-G" style="font-size: 2em;">G</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- XML Export Section -->
+    <div class="section">
+        <h2>Export XML (Compatible ADEME V2)</h2>
+        <button onclick="generateXML()">Générer XML</button>
+        <button onclick="downloadXML()" id="btn-download" disabled>Télécharger le fichier .xml</button>
+        <textarea id="xml-output" rows="15" style="width: 100%; margin-top: 10px; font-family: monospace;" readonly></textarea>
+    </div>
+
+</div>
+
+<script>
+    // --- Data Model ---
+
+    let building = {
+        altitude: 0,
+        constructionYear: 1990,
+        climateZone: 'H1a',
+        shab: 100,
+        hsp: 2.5,
+        rooms: [],
+        systems: {
+            heating: 'electric',
+            dhw: 'electric_cumulus',
+            ventilation: 'natural'
+        }
+    };
+
+    function generateId() {
+        return Math.random().toString(36).substr(2, 9);
+    }
+
+    // --- UI Logic ---
+
+    function init() {
+        // Initial room
+        addRoom();
+    }
+
+    function addRoom() {
+        const room = {
+            id: generateId(),
+            name: `Pièce ${building.rooms.length + 1}`,
+            surface: 10,
+            walls: [],
+            windows: [],
+            doors: [],
+            floors: [],
+            ceilings: []
+        };
+        building.rooms.push(room);
+        renderRooms();
+    }
+
+    function removeRoom(id) {
+        if(confirm("Supprimer cette pièce ?")) {
+            building.rooms = building.rooms.filter(r => r.id !== id);
+            renderRooms();
+        }
+    }
+
+    function updateRoom(id, field, value) {
+        const room = building.rooms.find(r => r.id === id);
+        if (room) {
+            room[field] = value;
+        }
+    }
+
+    // Generic Add/Remove/Update for Elements
+    function addElement(roomId, type, defaultProps) {
+        const room = building.rooms.find(r => r.id === roomId);
+        if (room) {
+            const element = { id: generateId(), ...defaultProps };
+            room[type].push(element);
+            renderRooms(); // Re-render to show new element
+        }
+    }
+
+    function removeElement(roomId, type, elementId) {
+        const room = building.rooms.find(r => r.id === roomId);
+        if (room) {
+            room[type] = room[type].filter(e => e.id !== elementId);
+            renderRooms();
+        }
+    }
+
+    function updateElement(roomId, type, elementId, field, value) {
+        const room = building.rooms.find(r => r.id === roomId);
+        if (room) {
+            const element = room[type].find(e => e.id === elementId);
+            if (element) {
+                element[field] = value;
+            }
+        }
+    }
+
+    // Render Functions
+    function renderRooms() {
+        const container = document.getElementById('rooms-list');
+        container.innerHTML = '';
+        building.rooms.forEach((room) => {
+            const roomDiv = document.createElement('div');
+            roomDiv.className = 'room';
+
+            let html = `
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <h3>${room.name}</h3>
+                    <button class="remove" onclick="removeRoom('${room.id}')">Supprimer Pièce</button>
+                </div>
+                <div style="margin-bottom: 10px;">
+                    <label>Nom:</label> <input type="text" value="${room.name}" onchange="updateRoom('${room.id}', 'name', this.value)">
+                    <label>Surface (m²):</label> <input type="number" step="0.1" value="${room.surface}" onchange="updateRoom('${room.id}', 'surface', this.value)">
+                </div>
+            `;
+
+            // Walls
+            html += `<div class="element-group"><h4>Murs <button onclick="addWall('${room.id}')">+</button></h4>`;
+            room.walls.forEach(w => {
+                html += `
+                    <div class="element-item">
+                        <label>S(m²):</label><input type="number" step="0.1" style="width:60px" value="${w.surface}" onchange="updateElement('${room.id}', 'walls', '${w.id}', 'surface', parseFloat(this.value))">
+                        <label>U(W/m².K):</label><input type="number" step="0.01" style="width:60px" value="${w.uValue}" onchange="updateElement('${room.id}', 'walls', '${w.id}', 'uValue', parseFloat(this.value))">
+                        <label>Orient:</label>
+                        <select style="width:80px" onchange="updateElement('${room.id}', 'walls', '${w.id}', 'orientation', this.value)">
+                            <option value="N" ${w.orientation === 'N' ? 'selected' : ''}>Nord</option>
+                            <option value="S" ${w.orientation === 'S' ? 'selected' : ''}>Sud</option>
+                            <option value="E" ${w.orientation === 'E' ? 'selected' : ''}>Est</option>
+                            <option value="O" ${w.orientation === 'O' ? 'selected' : ''}>Ouest</option>
+                        </select>
+                        <label>b:</label><input type="number" step="0.1" style="width:50px" value="${w.b}" onchange="updateElement('${room.id}', 'walls', '${w.id}', 'b', parseFloat(this.value))">
+                        <button class="remove" onclick="removeElement('${room.id}', 'walls', '${w.id}')">X</button>
+                    </div>`;
+            });
+            html += `</div>`;
+
+            // Windows
+            html += `<div class="element-group"><h4>Fenêtres <button onclick="addWindow('${room.id}')">+</button></h4>`;
+            room.windows.forEach(w => {
+                html += `
+                    <div class="element-item">
+                        <label>S(m²):</label><input type="number" step="0.1" style="width:60px" value="${w.surface}" onchange="updateElement('${room.id}', 'windows', '${w.id}', 'surface', parseFloat(this.value))">
+                        <label>Uw:</label><input type="number" step="0.1" style="width:60px" value="${w.uValue}" onchange="updateElement('${room.id}', 'windows', '${w.id}', 'uValue', parseFloat(this.value))">
+                        <label>Orient:</label>
+                        <select style="width:80px" onchange="updateElement('${room.id}', 'windows', '${w.id}', 'orientation', this.value)">
+                             <option value="N" ${w.orientation === 'N' ? 'selected' : ''}>Nord</option>
+                            <option value="S" ${w.orientation === 'S' ? 'selected' : ''}>Sud</option>
+                            <option value="E" ${w.orientation === 'E' ? 'selected' : ''}>Est</option>
+                            <option value="O" ${w.orientation === 'O' ? 'selected' : ''}>Ouest</option>
+                        </select>
+                        <button class="remove" onclick="removeElement('${room.id}', 'windows', '${w.id}')">X</button>
+                    </div>`;
+            });
+            html += `</div>`;
+
+            // Doors
+             html += `<div class="element-group"><h4>Portes <button onclick="addDoor('${room.id}')">+</button></h4>`;
+            room.doors.forEach(w => {
+                html += `
+                    <div class="element-item">
+                        <label>S(m²):</label><input type="number" step="0.1" style="width:60px" value="${w.surface}" onchange="updateElement('${room.id}', 'doors', '${w.id}', 'surface', parseFloat(this.value))">
+                        <label>U:</label><input type="number" step="0.1" style="width:60px" value="${w.uValue}" onchange="updateElement('${room.id}', 'doors', '${w.id}', 'uValue', parseFloat(this.value))">
+                        <button class="remove" onclick="removeElement('${room.id}', 'doors', '${w.id}')">X</button>
+                    </div>`;
+            });
+            html += `</div>`;
+
+             // Floors
+             html += `<div class="element-group"><h4>Plancher Bas <button onclick="addFloor('${room.id}')">+</button></h4>`;
+            room.floors.forEach(w => {
+                html += `
+                    <div class="element-item">
+                        <label>S(m²):</label><input type="number" step="0.1" style="width:60px" value="${w.surface}" onchange="updateElement('${room.id}', 'floors', '${w.id}', 'surface', parseFloat(this.value))">
+                        <label>U:</label><input type="number" step="0.1" style="width:60px" value="${w.uValue}" onchange="updateElement('${room.id}', 'floors', '${w.id}', 'uValue', parseFloat(this.value))">
+                         <label>b:</label><input type="number" step="0.1" style="width:50px" value="${w.b}" onchange="updateElement('${room.id}', 'floors', '${w.id}', 'b', parseFloat(this.value))">
+                        <button class="remove" onclick="removeElement('${room.id}', 'floors', '${w.id}')">X</button>
+                    </div>`;
+            });
+            html += `</div>`;
+
+             // Ceilings
+             html += `<div class="element-group"><h4>Plafond Haut <button onclick="addCeiling('${room.id}')">+</button></h4>`;
+            room.ceilings.forEach(w => {
+                html += `
+                    <div class="element-item">
+                        <label>S(m²):</label><input type="number" step="0.1" style="width:60px" value="${w.surface}" onchange="updateElement('${room.id}', 'ceilings', '${w.id}', 'surface', parseFloat(this.value))">
+                        <label>U:</label><input type="number" step="0.1" style="width:60px" value="${w.uValue}" onchange="updateElement('${room.id}', 'ceilings', '${w.id}', 'uValue', parseFloat(this.value))">
+                         <label>b:</label><input type="number" step="0.1" style="width:50px" value="${w.b}" onchange="updateElement('${room.id}', 'ceilings', '${w.id}', 'b', parseFloat(this.value))">
+                        <button class="remove" onclick="removeElement('${room.id}', 'ceilings', '${w.id}')">X</button>
+                    </div>`;
+            });
+            html += `</div>`;
+
+            roomDiv.innerHTML = html;
+            container.appendChild(roomDiv);
+        });
+    }
+
+    function addWall(roomId) { addElement(roomId, 'walls', { surface: 10, uValue: 2.5, orientation: 'N', b: 1 }); }
+    function addWindow(roomId) { addElement(roomId, 'windows', { surface: 1.5, uValue: 2.8, orientation: 'N', b: 1 }); }
+    function addDoor(roomId) { addElement(roomId, 'doors', { surface: 2, uValue: 3.5, b: 1 }); }
+    function addFloor(roomId) { addElement(roomId, 'floors', { surface: 10, uValue: 0.8, b: 1 }); }
+    function addCeiling(roomId) { addElement(roomId, 'ceilings', { surface: 10, uValue: 0.3, b: 1 }); }
+
+    // --- 3CL Calculation Logic (Simplified) ---
+
+    // DJU Values (Degrees-Days Unified) for climate zones (Approximation)
+    const DJU = {
+        'H1a': 2800, 'H1b': 2700, 'H1c': 2600,
+        'H2a': 2400, 'H2b': 2300, 'H2c': 2200, 'H2d': 2100,
+        'H3': 1800
+    };
+
+    // Primary Energy Factors
+    const PE_FACTORS = {
+        'electric': 2.3,
+        'gas_boiler_std': 1, 'gas_boiler_cond': 1,
+        'oil_boiler': 1, 'wood_stove': 1, 'heat_pump': 2.3
+    };
+
+    // CO2 Factors (kgCO2/kWh PCI)
+    const CO2_FACTORS = {
+        'electric': 0.079,
+        'gas_boiler_std': 0.227, 'gas_boiler_cond': 0.227,
+        'oil_boiler': 0.324, 'wood_stove': 0.030, 'heat_pump': 0.079
+    };
+
+    // Heating System Efficiency (Rendement global approx)
+    const HEATING_EFFICIENCY = {
+        'electric': 0.95,
+        'gas_boiler_std': 0.75,
+        'gas_boiler_cond': 0.90,
+        'oil_boiler': 0.75,
+        'heat_pump': 2.5, // COP Moyen
+        'wood_stove': 0.70
+    };
+
+    function calculateDPE() {
+        const shab = parseFloat(building.shab) || 1;
+        const hsp = parseFloat(building.hsp) || 2.5;
+        const volume = shab * hsp;
+        const dju = DJU[building.climateZone] || 2500;
+
+        // 1. Heat Loss (Ht)
+        let Ht_surf = 0;
+        building.rooms.forEach(room => {
+            // Walls, Floors, Ceilings, Doors
+            [...room.walls, ...room.floors, ...room.ceilings, ...room.doors].forEach(e => {
+                Ht_surf += (e.surface * e.uValue * (e.b || 1));
+            });
+            // Windows
+            room.windows.forEach(e => {
+                Ht_surf += (e.surface * e.uValue * (e.b || 1));
+            });
+        });
+
+        // Ventilation Loss (Simplified)
+        // Hvent = 0.34 * Qv_moy. Let's assume Qv_moy approx 0.5 Vol/h
+        const Qv = 0.5 * volume;
+        const Ht_vent = 0.34 * Qv;
+
+        // Thermal Bridges (Simplified approx 10% of surfacic loss)
+        const Ht_ponts = Ht_surf * 0.1;
+
+        const Ht = Ht_surf + Ht_vent + Ht_ponts;
+
+        // 2. Heating Needs (Besoins)
+        // Intermittence Io = 0.85 approx
+        const Io = 0.85;
+        // Solar Gains (Apports) - Very simplified: 20% of needs covered by gains
+        const gain_factor = 0.8;
+
+        // Besoins = G * V * DJU * Io ... (Old method), New method is hour-by-hour.
+        // We use a static method approx: Besoins = Ht * DJU * 24 / 1000 * Intermittence * (1 - GainsFraction)
+        const needs_heating_raw = (Ht * dju * 24 / 1000) * Io * gain_factor;
+
+        const heating_sys = building.systems.heating;
+        const efficiency = HEATING_EFFICIENCY[heating_sys] || 1;
+        const consumption_heating_final = needs_heating_raw / efficiency;
+
+        // 3. DHW Needs (ECS)
+        // Besoins ECS = 15 * Shab (Rough simplified formula)
+        const needs_dhw_raw = 20 * shab;
+
+        const dhw_sys = building.systems.dhw;
+        // ECS Efficiency/COP
+        let dhw_eff = 1;
+        if (dhw_sys === 'electric_cumulus') dhw_eff = 0.9;
+        if (dhw_sys === 'thermodynamic') dhw_eff = 2.0;
+        if (dhw_sys === 'gas_instant') dhw_eff = 0.8;
+
+        const consumption_dhw_final = needs_dhw_raw / dhw_eff;
+
+        // 4. Primary Energy (Cep)
+        const pe_heating = consumption_heating_final * (PE_FACTORS[heating_sys] || 1);
+        const pe_dhw = consumption_dhw_final * (PE_FACTORS[heating_sys] || 1); // Assuming similar source if connected, else electric usually
+        // Correction if DHW is electric but Heating is not
+        let pe_dhw_corrected = consumption_dhw_final * 2.3; // Default electric for separate
+        if (dhw_sys === 'gas_instant') pe_dhw_corrected = consumption_dhw_final * 1;
+        if (dhw_sys === 'connected') pe_dhw_corrected = consumption_dhw_final * (PE_FACTORS[heating_sys] || 1);
+        if (dhw_sys === 'thermodynamic') pe_dhw_corrected = consumption_dhw_final * 2.3; // Already divided by COP 2.0
+
+        const cep_total = pe_heating + pe_dhw_corrected;
+        const cep_m2 = cep_total / shab;
+
+        // 5. GES
+        const ges_heating = consumption_heating_final * (CO2_FACTORS[heating_sys] || 0);
+        let ges_dhw = consumption_dhw_final * 0.079; // Default elec
+        if (dhw_sys === 'gas_instant') ges_dhw = consumption_dhw_final * 0.227;
+        if (dhw_sys === 'connected') ges_dhw = consumption_dhw_final * (CO2_FACTORS[heating_sys] || 0);
+
+        const ges_total = ges_heating + ges_dhw;
+        const ges_m2 = ges_total / shab;
+
+        // Display Results
+        document.getElementById('calculation-output').style.display = 'block';
+        document.getElementById('res-ht').innerText = Ht.toFixed(1);
+        document.getElementById('res-heat-needs').innerText = needs_heating_raw.toFixed(0);
+        document.getElementById('res-dhw-needs').innerText = needs_dhw_raw.toFixed(0);
+        document.getElementById('res-cep').innerText = cep_m2.toFixed(1);
+        document.getElementById('res-ges').innerText = ges_m2.toFixed(1);
+
+        // Grades
+        const dpeClass = getDPEClass(cep_m2, ges_m2);
+        const dpeEl = document.getElementById('dpe-grade');
+        dpeEl.className = `dpe-label class-${dpeClass}`;
+        dpeEl.innerText = dpeClass;
+
+        const gesClass = getGESClass(ges_m2);
+        const gesEl = document.getElementById('ges-grade');
+        gesEl.className = `dpe-label class-${gesClass}`;
+        gesEl.innerText = gesClass;
+    }
+
+    function getDPEClass(cep, ges) {
+        // Thresholds 2021 (Approx)
+        // Taking the worst of Cep or Ges is standard now, but let's stick to Cep mainly or simple logic
+        // A: < 70, B: 71-110, C: 111-180, D: 181-250, E: 251-330, F: 331-420, G: > 420
+        // Also constraints on GES: A<6, B<11, C<30, D<50, E<70, F<100
+
+        const scale = [
+            { l: 'A', cep: 70, ges: 6 },
+            { l: 'B', cep: 110, ges: 11 },
+            { l: 'C', cep: 180, ges: 30 },
+            { l: 'D', cep: 250, ges: 50 },
+            { l: 'E', cep: 330, ges: 70 },
+            { l: 'F', cep: 420, ges: 100 },
+            { l: 'G', cep: 9999, ges: 9999 }
+        ];
+
+        for (let grade of scale) {
+            if (cep <= grade.cep && ges <= grade.ges) return grade.l;
+            // If one fails, we go to next.
+            // Actually DPE 2021 takes the worst class between Energy and GES.
+            // Simplified here: we check if BOTH fit in the class, else check next.
+        }
+        return 'G';
+    }
+
+    function getGESClass(ges) {
+        if (ges <= 6) return 'A';
+        if (ges <= 11) return 'B';
+        if (ges <= 30) return 'C';
+        if (ges <= 50) return 'D';
+        if (ges <= 70) return 'E';
+        if (ges <= 100) return 'F';
+        return 'G';
+    }
+
+
+    // --- XML Generation (ADEME V2 Style) ---
+
+    function generateXML() {
+        // We build a simplified XML structure mimicking ADEME DPE V2
+        // Reference namespaces usually: xmlns:dpe="http://www.ademe.fr/2013/dpe/v2"
+
+        let xml = `<?xml version="1.0" encoding="UTF-8"?>
+<dpe:dpe xmlns:dpe="http://www.ademe.fr/2013/dpe/v2" version="2.0">
+    <administratif>
+        <date_visite>${new Date().toISOString().split('T')[0]}</date_visite>
+        <commune>PARIS</commune>
+        <code_postal>75000</code_postal>
+    </administratif>
+    <logement>
+        <caracteristique_generale>
+            <annee_construction>${building.constructionYear}</annee_construction>
+            <surface_habitable>${building.shab}</surface_habitable>
+            <altitude>${building.altitude}</altitude>
+            <zone_climatique>${building.climateZone}</zone_climatique>
+        </caracteristique_generale>
+        <enveloppe>
+`;
+
+        // Iterate rooms and elements
+        building.rooms.forEach(room => {
+            xml += `            <piece id="${room.id}">
+                <nom>${room.name}</nom>
+                <surface>${room.surface}</surface>\n`;
+
+            // Murs
+            room.walls.forEach(w => {
+                xml += `                <mur id="${w.id}">
+                    <surface>${w.surface}</surface>
+                    <u_value>${w.uValue}</u_value>
+                    <b_coef>${w.b}</b_coef>
+                    <orientation>${w.orientation}</orientation>
+                </mur>\n`;
+            });
+
+             // Windows
+            room.windows.forEach(w => {
+                xml += `                <baie_vitree id="${w.id}">
+                    <surface>${w.surface}</surface>
+                    <u_value>${w.uValue}</u_value>
+                    <orientation>${w.orientation}</orientation>
+                </baie_vitree>\n`;
+            });
+
+             // Doors
+            room.doors.forEach(w => {
+                xml += `                <porte id="${w.id}">
+                    <surface>${w.surface}</surface>
+                    <u_value>${w.uValue}</u_value>
+                </porte>\n`;
+            });
+
+             // Floors
+            room.floors.forEach(w => {
+                xml += `                <plancher_bas id="${w.id}">
+                    <surface>${w.surface}</surface>
+                    <u_value>${w.uValue}</u_value>
+                    <b_coef>${w.b}</b_coef>
+                </plancher_bas>\n`;
+            });
+
+             // Ceilings
+            room.ceilings.forEach(w => {
+                xml += `                <plafond_haut id="${w.id}">
+                    <surface>${w.surface}</surface>
+                    <u_value>${w.uValue}</u_value>
+                    <b_coef>${w.b}</b_coef>
+                </plafond_haut>\n`;
+            });
+
+            xml += `            </piece>\n`;
+        });
+
+        xml += `        </enveloppe>
+        <systemes>
+            <chauffage>${building.systems.heating}</chauffage>
+            <ecs>${building.systems.dhw}</ecs>
+            <ventilation>${building.systems.ventilation}</ventilation>
+        </systemes>
+    </logement>
+    <resultats_calcul>
+        <!-- Estimated values from JS calculation -->
+        <consommation_energie_primaire>${document.getElementById('res-cep').innerText}</consommation_energie_primaire>
+        <classe_dpe>${document.getElementById('dpe-grade').innerText}</classe_dpe>
+        <emission_ges>${document.getElementById('res-ges').innerText}</emission_ges>
+        <classe_ges>${document.getElementById('ges-grade').innerText}</classe_ges>
+    </resultats_calcul>
+</dpe:dpe>`;
+
+        document.getElementById('xml-output').value = xml;
+        document.getElementById('btn-download').disabled = false;
+        return xml;
+    }
+
+    function downloadXML() {
+        const xmlContent = document.getElementById('xml-output').value;
+        const blob = new Blob([xmlContent], { type: 'text/xml' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `dpe_export_${new Date().toISOString().split('T')[0]}.xml`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    }
+
+    // Init
+    init();
+
+</script>
+</body>
+</html>

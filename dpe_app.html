@@ -53,12 +53,16 @@
             display: inline-block;
             font-weight: bold;
             margin-right: 5px;
+            font-size: 0.9em;
         }
         input, select {
             padding: 5px;
             border: 1px solid #ccc;
             border-radius: 3px;
-            width: 120px;
+            width: 100px; /* Reduced width */
+        }
+        input[type="number"] {
+            width: 70px;
         }
         button {
             padding: 5px 10px;
@@ -162,9 +166,10 @@
     <div class="section" id="systems-data">
         <h2>Systèmes</h2>
         <div style="display: flex; gap: 20px; flex-wrap: wrap;">
-            <div>
-                <label>Type Chauffage:</label>
-                <select id="heating-type" onchange="building.systems.heating=this.value">
+            <div style="border: 1px solid #eee; padding: 10px; border-radius: 5px;">
+                <h4>Chauffage</h4>
+                <label>Type:</label>
+                <select id="heating-type" onchange="building.systems.heating.type=this.value">
                     <option value="electric">Électrique Direct</option>
                     <option value="gas_boiler_std">Chaudière Gaz Standard</option>
                     <option value="gas_boiler_cond">Chaudière Gaz Condensation</option>
@@ -172,24 +177,32 @@
                     <option value="heat_pump">Pompe à Chaleur (Air/Eau)</option>
                     <option value="wood_stove">Poêle à Bois</option>
                 </select>
+                <label>Année:</label>
+                <input type="number" placeholder="Année" value="2010" onchange="building.systems.heating.year=this.value">
             </div>
-            <div>
-                <label>Type ECS:</label>
-                <select id="dhw-type" onchange="building.systems.dhw=this.value">
+            <div style="border: 1px solid #eee; padding: 10px; border-radius: 5px;">
+                <h4>Eau Chaude Sanitaire (ECS)</h4>
+                <label>Type:</label>
+                <select id="dhw-type" onchange="building.systems.dhw.type=this.value">
                     <option value="electric_cumulus">Cumulus Électrique</option>
                     <option value="gas_instant">Chauffe-eau Gaz Instantané</option>
                     <option value="thermodynamic">Chauffe-eau Thermodynamique</option>
                     <option value="connected">Relié au Chauffage</option>
                 </select>
+                <label>Année:</label>
+                <input type="number" placeholder="Année" value="2010" onchange="building.systems.dhw.year=this.value">
             </div>
-             <div>
-                <label>Ventilation:</label>
-                <select id="ventilation-type" onchange="building.systems.ventilation=this.value">
+             <div style="border: 1px solid #eee; padding: 10px; border-radius: 5px;">
+                <h4>Ventilation</h4>
+                <label>Type:</label>
+                <select id="ventilation-type" onchange="building.systems.ventilation.type=this.value">
                     <option value="natural">Naturelle</option>
                     <option value="vmc_sf_auto">VMC Simple Flux Autoréglable</option>
                     <option value="vmc_sf_hygro">VMC Simple Flux Hygro A/B</option>
                     <option value="vmc_df">VMC Double Flux</option>
                 </select>
+                <label>Année:</label>
+                <input type="number" placeholder="Année" value="2010" onchange="building.systems.ventilation.year=this.value">
             </div>
         </div>
     </div>
@@ -254,9 +267,9 @@
         hsp: 2.5,
         rooms: [],
         systems: {
-            heating: 'electric',
-            dhw: 'electric_cumulus',
-            ventilation: 'natural'
+            heating: { type: 'electric', year: 2010 },
+            dhw: { type: 'electric_cumulus', year: 2010 },
+            ventilation: { type: 'natural', year: 2010 }
         }
     };
 
@@ -280,7 +293,8 @@
             windows: [],
             doors: [],
             floors: [],
-            ceilings: []
+            ceilings: [],
+            rampants: []
         };
         building.rooms.push(room);
         renderRooms();
@@ -306,7 +320,7 @@
         if (room) {
             const element = { id: generateId(), ...defaultProps };
             room[type].push(element);
-            renderRooms(); // Re-render to show new element
+            renderRooms();
         }
     }
 
@@ -352,17 +366,55 @@
             room.walls.forEach(w => {
                 html += `
                     <div class="element-item">
-                        <label>S(m²):</label><input type="number" step="0.1" style="width:60px" value="${w.surface}" onchange="updateElement('${room.id}', 'walls', '${w.id}', 'surface', parseFloat(this.value))">
-                        <label>U(W/m².K):</label><input type="number" step="0.01" style="width:60px" value="${w.uValue}" onchange="updateElement('${room.id}', 'walls', '${w.id}', 'uValue', parseFloat(this.value))">
-                        <label>Orient:</label>
-                        <select style="width:80px" onchange="updateElement('${room.id}', 'walls', '${w.id}', 'orientation', this.value)">
-                            <option value="N" ${w.orientation === 'N' ? 'selected' : ''}>Nord</option>
-                            <option value="S" ${w.orientation === 'S' ? 'selected' : ''}>Sud</option>
-                            <option value="E" ${w.orientation === 'E' ? 'selected' : ''}>Est</option>
-                            <option value="O" ${w.orientation === 'O' ? 'selected' : ''}>Ouest</option>
+                        <label>Surf(m²):</label><input type="number" step="0.1" value="${w.surface}" onchange="updateElement('${room.id}', 'walls', '${w.id}', 'surface', parseFloat(this.value))">
+                        <label>U:</label><input type="number" step="0.01" value="${w.uValue}" onchange="updateElement('${room.id}', 'walls', '${w.id}', 'uValue', parseFloat(this.value))">
+                        <label>Matériau:</label>
+                        <select onchange="updateElement('${room.id}', 'walls', '${w.id}', 'material', this.value)">
+                            <option value="parpaing" ${w.material === 'parpaing' ? 'selected' : ''}>Parpaing</option>
+                            <option value="pierre" ${w.material === 'pierre' ? 'selected' : ''}>Pierre</option>
+                            <option value="brique" ${w.material === 'brique' ? 'selected' : ''}>Brique</option>
+                            <option value="beton" ${w.material === 'beton' ? 'selected' : ''}>Béton</option>
+                            <option value="bois" ${w.material === 'bois' ? 'selected' : ''}>Bois</option>
+                            <option value="autre" ${w.material === 'autre' ? 'selected' : ''}>Autre</option>
                         </select>
-                        <label>b:</label><input type="number" step="0.1" style="width:50px" value="${w.b}" onchange="updateElement('${room.id}', 'walls', '${w.id}', 'b', parseFloat(this.value))">
+                        <label>Ép(cm):</label><input type="number" value="${w.thickness}" onchange="updateElement('${room.id}', 'walls', '${w.id}', 'thickness', parseFloat(this.value))">
+                        <label>Orient:</label>
+                        <select style="width:60px" onchange="updateElement('${room.id}', 'walls', '${w.id}', 'orientation', this.value)">
+                            <option value="N" ${w.orientation === 'N' ? 'selected' : ''}>N</option>
+                            <option value="S" ${w.orientation === 'S' ? 'selected' : ''}>S</option>
+                            <option value="E" ${w.orientation === 'E' ? 'selected' : ''}>E</option>
+                            <option value="O" ${w.orientation === 'O' ? 'selected' : ''}>O</option>
+                        </select>
+                        <label>b:</label><input type="number" step="0.1" value="${w.b}" onchange="updateElement('${room.id}', 'walls', '${w.id}', 'b', parseFloat(this.value))">
+                        <label>Année:</label><input type="number" value="${w.year}" onchange="updateElement('${room.id}', 'walls', '${w.id}', 'year', parseFloat(this.value))">
                         <button class="remove" onclick="removeElement('${room.id}', 'walls', '${w.id}')">X</button>
+                    </div>`;
+            });
+            html += `</div>`;
+
+            // Rampants (Sloped Ceilings)
+            html += `<div class="element-group"><h4>Rampants (Sous-Pente) <button onclick="addRampant('${room.id}')">+</button></h4>`;
+            room.rampants.forEach(w => {
+                html += `
+                    <div class="element-item">
+                        <label>Surf(m²):</label><input type="number" step="0.1" value="${w.surface}" onchange="updateElement('${room.id}', 'rampants', '${w.id}', 'surface', parseFloat(this.value))">
+                        <label>U:</label><input type="number" step="0.01" value="${w.uValue}" onchange="updateElement('${room.id}', 'rampants', '${w.id}', 'uValue', parseFloat(this.value))">
+                        <label>Matériau:</label>
+                        <select onchange="updateElement('${room.id}', 'rampants', '${w.id}', 'material', this.value)">
+                             <option value="platre" ${w.material === 'platre' ? 'selected' : ''}>Plâtre</option>
+                            <option value="bois" ${w.material === 'bois' ? 'selected' : ''}>Bois</option>
+                            <option value="autre" ${w.material === 'autre' ? 'selected' : ''}>Autre</option>
+                        </select>
+                         <label>Orient:</label>
+                        <select style="width:60px" onchange="updateElement('${room.id}', 'rampants', '${w.id}', 'orientation', this.value)">
+                            <option value="N" ${w.orientation === 'N' ? 'selected' : ''}>N</option>
+                            <option value="S" ${w.orientation === 'S' ? 'selected' : ''}>S</option>
+                            <option value="E" ${w.orientation === 'E' ? 'selected' : ''}>E</option>
+                            <option value="O" ${w.orientation === 'O' ? 'selected' : ''}>O</option>
+                        </select>
+                         <label>b:</label><input type="number" step="0.1" value="${w.b}" onchange="updateElement('${room.id}', 'rampants', '${w.id}', 'b', parseFloat(this.value))">
+                        <label>Année:</label><input type="number" value="${w.year}" onchange="updateElement('${room.id}', 'rampants', '${w.id}', 'year', parseFloat(this.value))">
+                        <button class="remove" onclick="removeElement('${room.id}', 'rampants', '${w.id}')">X</button>
                     </div>`;
             });
             html += `</div>`;
@@ -372,15 +424,16 @@
             room.windows.forEach(w => {
                 html += `
                     <div class="element-item">
-                        <label>S(m²):</label><input type="number" step="0.1" style="width:60px" value="${w.surface}" onchange="updateElement('${room.id}', 'windows', '${w.id}', 'surface', parseFloat(this.value))">
-                        <label>Uw:</label><input type="number" step="0.1" style="width:60px" value="${w.uValue}" onchange="updateElement('${room.id}', 'windows', '${w.id}', 'uValue', parseFloat(this.value))">
+                        <label>S(m²):</label><input type="number" step="0.1" value="${w.surface}" onchange="updateElement('${room.id}', 'windows', '${w.id}', 'surface', parseFloat(this.value))">
+                        <label>Uw:</label><input type="number" step="0.1" value="${w.uValue}" onchange="updateElement('${room.id}', 'windows', '${w.id}', 'uValue', parseFloat(this.value))">
                         <label>Orient:</label>
-                        <select style="width:80px" onchange="updateElement('${room.id}', 'windows', '${w.id}', 'orientation', this.value)">
-                             <option value="N" ${w.orientation === 'N' ? 'selected' : ''}>Nord</option>
-                            <option value="S" ${w.orientation === 'S' ? 'selected' : ''}>Sud</option>
-                            <option value="E" ${w.orientation === 'E' ? 'selected' : ''}>Est</option>
-                            <option value="O" ${w.orientation === 'O' ? 'selected' : ''}>Ouest</option>
+                        <select style="width:60px" onchange="updateElement('${room.id}', 'windows', '${w.id}', 'orientation', this.value)">
+                             <option value="N" ${w.orientation === 'N' ? 'selected' : ''}>N</option>
+                            <option value="S" ${w.orientation === 'S' ? 'selected' : ''}>S</option>
+                            <option value="E" ${w.orientation === 'E' ? 'selected' : ''}>E</option>
+                            <option value="O" ${w.orientation === 'O' ? 'selected' : ''}>O</option>
                         </select>
+                        <label>Année:</label><input type="number" value="${w.year}" onchange="updateElement('${room.id}', 'windows', '${w.id}', 'year', parseFloat(this.value))">
                         <button class="remove" onclick="removeElement('${room.id}', 'windows', '${w.id}')">X</button>
                     </div>`;
             });
@@ -391,8 +444,9 @@
             room.doors.forEach(w => {
                 html += `
                     <div class="element-item">
-                        <label>S(m²):</label><input type="number" step="0.1" style="width:60px" value="${w.surface}" onchange="updateElement('${room.id}', 'doors', '${w.id}', 'surface', parseFloat(this.value))">
-                        <label>U:</label><input type="number" step="0.1" style="width:60px" value="${w.uValue}" onchange="updateElement('${room.id}', 'doors', '${w.id}', 'uValue', parseFloat(this.value))">
+                        <label>S(m²):</label><input type="number" step="0.1" value="${w.surface}" onchange="updateElement('${room.id}', 'doors', '${w.id}', 'surface', parseFloat(this.value))">
+                        <label>U:</label><input type="number" step="0.1" value="${w.uValue}" onchange="updateElement('${room.id}', 'doors', '${w.id}', 'uValue', parseFloat(this.value))">
+                        <label>Année:</label><input type="number" value="${w.year}" onchange="updateElement('${room.id}', 'doors', '${w.id}', 'year', parseFloat(this.value))">
                         <button class="remove" onclick="removeElement('${room.id}', 'doors', '${w.id}')">X</button>
                     </div>`;
             });
@@ -403,9 +457,16 @@
             room.floors.forEach(w => {
                 html += `
                     <div class="element-item">
-                        <label>S(m²):</label><input type="number" step="0.1" style="width:60px" value="${w.surface}" onchange="updateElement('${room.id}', 'floors', '${w.id}', 'surface', parseFloat(this.value))">
-                        <label>U:</label><input type="number" step="0.1" style="width:60px" value="${w.uValue}" onchange="updateElement('${room.id}', 'floors', '${w.id}', 'uValue', parseFloat(this.value))">
-                         <label>b:</label><input type="number" step="0.1" style="width:50px" value="${w.b}" onchange="updateElement('${room.id}', 'floors', '${w.id}', 'b', parseFloat(this.value))">
+                        <label>S(m²):</label><input type="number" step="0.1" value="${w.surface}" onchange="updateElement('${room.id}', 'floors', '${w.id}', 'surface', parseFloat(this.value))">
+                        <label>U:</label><input type="number" step="0.1" value="${w.uValue}" onchange="updateElement('${room.id}', 'floors', '${w.id}', 'uValue', parseFloat(this.value))">
+                        <label>Matériau:</label>
+                        <select onchange="updateElement('${room.id}', 'floors', '${w.id}', 'material', this.value)">
+                            <option value="dalle_beton" ${w.material === 'dalle_beton' ? 'selected' : ''}>Dalle Béton</option>
+                            <option value="plancher_bois" ${w.material === 'plancher_bois' ? 'selected' : ''}>Plancher Bois</option>
+                            <option value="autre" ${w.material === 'autre' ? 'selected' : ''}>Autre</option>
+                        </select>
+                         <label>b:</label><input type="number" step="0.1" value="${w.b}" onchange="updateElement('${room.id}', 'floors', '${w.id}', 'b', parseFloat(this.value))">
+                        <label>Année:</label><input type="number" value="${w.year}" onchange="updateElement('${room.id}', 'floors', '${w.id}', 'year', parseFloat(this.value))">
                         <button class="remove" onclick="removeElement('${room.id}', 'floors', '${w.id}')">X</button>
                     </div>`;
             });
@@ -416,9 +477,17 @@
             room.ceilings.forEach(w => {
                 html += `
                     <div class="element-item">
-                        <label>S(m²):</label><input type="number" step="0.1" style="width:60px" value="${w.surface}" onchange="updateElement('${room.id}', 'ceilings', '${w.id}', 'surface', parseFloat(this.value))">
-                        <label>U:</label><input type="number" step="0.1" style="width:60px" value="${w.uValue}" onchange="updateElement('${room.id}', 'ceilings', '${w.id}', 'uValue', parseFloat(this.value))">
-                         <label>b:</label><input type="number" step="0.1" style="width:50px" value="${w.b}" onchange="updateElement('${room.id}', 'ceilings', '${w.id}', 'b', parseFloat(this.value))">
+                        <label>S(m²):</label><input type="number" step="0.1" value="${w.surface}" onchange="updateElement('${room.id}', 'ceilings', '${w.id}', 'surface', parseFloat(this.value))">
+                        <label>U:</label><input type="number" step="0.1" value="${w.uValue}" onchange="updateElement('${room.id}', 'ceilings', '${w.id}', 'uValue', parseFloat(this.value))">
+                        <label>Matériau:</label>
+                        <select onchange="updateElement('${room.id}', 'ceilings', '${w.id}', 'material', this.value)">
+                            <option value="dalle_beton" ${w.material === 'dalle_beton' ? 'selected' : ''}>Dalle Béton</option>
+                            <option value="plancher_bois" ${w.material === 'plancher_bois' ? 'selected' : ''}>Plancher Bois</option>
+                            <option value="platre" ${w.material === 'platre' ? 'selected' : ''}>Plâtre</option>
+                            <option value="autre" ${w.material === 'autre' ? 'selected' : ''}>Autre</option>
+                        </select>
+                         <label>b:</label><input type="number" step="0.1" value="${w.b}" onchange="updateElement('${room.id}', 'ceilings', '${w.id}', 'b', parseFloat(this.value))">
+                        <label>Année:</label><input type="number" value="${w.year}" onchange="updateElement('${room.id}', 'ceilings', '${w.id}', 'year', parseFloat(this.value))">
                         <button class="remove" onclick="removeElement('${room.id}', 'ceilings', '${w.id}')">X</button>
                     </div>`;
             });
@@ -429,11 +498,25 @@
         });
     }
 
-    function addWall(roomId) { addElement(roomId, 'walls', { surface: 10, uValue: 2.5, orientation: 'N', b: 1 }); }
-    function addWindow(roomId) { addElement(roomId, 'windows', { surface: 1.5, uValue: 2.8, orientation: 'N', b: 1 }); }
-    function addDoor(roomId) { addElement(roomId, 'doors', { surface: 2, uValue: 3.5, b: 1 }); }
-    function addFloor(roomId) { addElement(roomId, 'floors', { surface: 10, uValue: 0.8, b: 1 }); }
-    function addCeiling(roomId) { addElement(roomId, 'ceilings', { surface: 10, uValue: 0.3, b: 1 }); }
+    // Default Properties
+    function addWall(roomId) {
+        addElement(roomId, 'walls', { surface: 10, uValue: 2.5, orientation: 'N', b: 1, material: 'parpaing', thickness: 20, year: 1990 });
+    }
+    function addRampant(roomId) {
+        addElement(roomId, 'rampants', { surface: 10, uValue: 0.3, orientation: 'N', b: 1, material: 'platre', year: 2010 });
+    }
+    function addWindow(roomId) {
+        addElement(roomId, 'windows', { surface: 1.5, uValue: 2.8, orientation: 'N', b: 1, year: 2000 });
+    }
+    function addDoor(roomId) {
+        addElement(roomId, 'doors', { surface: 2, uValue: 3.5, b: 1, year: 2000 });
+    }
+    function addFloor(roomId) {
+        addElement(roomId, 'floors', { surface: 10, uValue: 0.8, b: 1, material: 'dalle_beton', year: 1990 });
+    }
+    function addCeiling(roomId) {
+        addElement(roomId, 'ceilings', { surface: 10, uValue: 0.3, b: 1, material: 'dalle_beton', year: 1990 });
+    }
 
     // --- 3CL Calculation Logic (Simplified) ---
 
@@ -477,8 +560,8 @@
         // 1. Heat Loss (Ht)
         let Ht_surf = 0;
         building.rooms.forEach(room => {
-            // Walls, Floors, Ceilings, Doors
-            [...room.walls, ...room.floors, ...room.ceilings, ...room.doors].forEach(e => {
+            // Include rampants in surface loss
+            [...room.walls, ...room.floors, ...room.ceilings, ...room.doors, ...room.rampants].forEach(e => {
                 Ht_surf += (e.surface * e.uValue * (e.b || 1));
             });
             // Windows
@@ -488,7 +571,6 @@
         });
 
         // Ventilation Loss (Simplified)
-        // Hvent = 0.34 * Qv_moy. Let's assume Qv_moy approx 0.5 Vol/h
         const Qv = 0.5 * volume;
         const Ht_vent = 0.34 * Qv;
 
@@ -498,24 +580,19 @@
         const Ht = Ht_surf + Ht_vent + Ht_ponts;
 
         // 2. Heating Needs (Besoins)
-        // Intermittence Io = 0.85 approx
         const Io = 0.85;
-        // Solar Gains (Apports) - Very simplified: 20% of needs covered by gains
         const gain_factor = 0.8;
 
-        // Besoins = G * V * DJU * Io ... (Old method), New method is hour-by-hour.
-        // We use a static method approx: Besoins = Ht * DJU * 24 / 1000 * Intermittence * (1 - GainsFraction)
         const needs_heating_raw = (Ht * dju * 24 / 1000) * Io * gain_factor;
 
-        const heating_sys = building.systems.heating;
+        const heating_sys = building.systems.heating.type;
         const efficiency = HEATING_EFFICIENCY[heating_sys] || 1;
         const consumption_heating_final = needs_heating_raw / efficiency;
 
         // 3. DHW Needs (ECS)
-        // Besoins ECS = 15 * Shab (Rough simplified formula)
         const needs_dhw_raw = 20 * shab;
 
-        const dhw_sys = building.systems.dhw;
+        const dhw_sys = building.systems.dhw.type;
         // ECS Efficiency/COP
         let dhw_eff = 1;
         if (dhw_sys === 'electric_cumulus') dhw_eff = 0.9;
@@ -526,12 +603,12 @@
 
         // 4. Primary Energy (Cep)
         const pe_heating = consumption_heating_final * (PE_FACTORS[heating_sys] || 1);
-        const pe_dhw = consumption_dhw_final * (PE_FACTORS[heating_sys] || 1); // Assuming similar source if connected, else electric usually
+        const pe_dhw = consumption_dhw_final * (PE_FACTORS[heating_sys] || 1);
         // Correction if DHW is electric but Heating is not
         let pe_dhw_corrected = consumption_dhw_final * 2.3; // Default electric for separate
         if (dhw_sys === 'gas_instant') pe_dhw_corrected = consumption_dhw_final * 1;
         if (dhw_sys === 'connected') pe_dhw_corrected = consumption_dhw_final * (PE_FACTORS[heating_sys] || 1);
-        if (dhw_sys === 'thermodynamic') pe_dhw_corrected = consumption_dhw_final * 2.3; // Already divided by COP 2.0
+        if (dhw_sys === 'thermodynamic') pe_dhw_corrected = consumption_dhw_final * 2.3;
 
         const cep_total = pe_heating + pe_dhw_corrected;
         const cep_m2 = cep_total / shab;
@@ -566,11 +643,6 @@
     }
 
     function getDPEClass(cep, ges) {
-        // Thresholds 2021 (Approx)
-        // Taking the worst of Cep or Ges is standard now, but let's stick to Cep mainly or simple logic
-        // A: < 70, B: 71-110, C: 111-180, D: 181-250, E: 251-330, F: 331-420, G: > 420
-        // Also constraints on GES: A<6, B<11, C<30, D<50, E<70, F<100
-
         const scale = [
             { l: 'A', cep: 70, ges: 6 },
             { l: 'B', cep: 110, ges: 11 },
@@ -583,9 +655,6 @@
 
         for (let grade of scale) {
             if (cep <= grade.cep && ges <= grade.ges) return grade.l;
-            // If one fails, we go to next.
-            // Actually DPE 2021 takes the worst class between Energy and GES.
-            // Simplified here: we check if BOTH fit in the class, else check next.
         }
         return 'G';
     }
@@ -604,9 +673,6 @@
     // --- XML Generation (ADEME V2 Style) ---
 
     function generateXML() {
-        // We build a simplified XML structure mimicking ADEME DPE V2
-        // Reference namespaces usually: xmlns:dpe="http://www.ademe.fr/2013/dpe/v2"
-
         let xml = `<?xml version="1.0" encoding="UTF-8"?>
 <dpe:dpe xmlns:dpe="http://www.ademe.fr/2013/dpe/v2" version="2.0">
     <administratif>
@@ -637,7 +703,22 @@
                     <u_value>${w.uValue}</u_value>
                     <b_coef>${w.b}</b_coef>
                     <orientation>${w.orientation}</orientation>
+                    <materiaux>${w.material}</materiaux>
+                    <epaisseur>${w.thickness}</epaisseur>
+                    <annee_installation>${w.year}</annee_installation>
                 </mur>\n`;
+            });
+
+            // Rampants
+            room.rampants.forEach(w => {
+                xml += `                <rampant id="${w.id}">
+                    <surface>${w.surface}</surface>
+                    <u_value>${w.uValue}</u_value>
+                    <b_coef>${w.b}</b_coef>
+                    <orientation>${w.orientation}</orientation>
+                    <materiaux>${w.material}</materiaux>
+                    <annee_installation>${w.year}</annee_installation>
+                </rampant>\n`;
             });
 
              // Windows
@@ -646,6 +727,7 @@
                     <surface>${w.surface}</surface>
                     <u_value>${w.uValue}</u_value>
                     <orientation>${w.orientation}</orientation>
+                    <annee_installation>${w.year}</annee_installation>
                 </baie_vitree>\n`;
             });
 
@@ -654,6 +736,7 @@
                 xml += `                <porte id="${w.id}">
                     <surface>${w.surface}</surface>
                     <u_value>${w.uValue}</u_value>
+                    <annee_installation>${w.year}</annee_installation>
                 </porte>\n`;
             });
 
@@ -663,6 +746,8 @@
                     <surface>${w.surface}</surface>
                     <u_value>${w.uValue}</u_value>
                     <b_coef>${w.b}</b_coef>
+                    <materiaux>${w.material}</materiaux>
+                    <annee_installation>${w.year}</annee_installation>
                 </plancher_bas>\n`;
             });
 
@@ -672,6 +757,8 @@
                     <surface>${w.surface}</surface>
                     <u_value>${w.uValue}</u_value>
                     <b_coef>${w.b}</b_coef>
+                    <materiaux>${w.material}</materiaux>
+                    <annee_installation>${w.year}</annee_installation>
                 </plafond_haut>\n`;
             });
 
@@ -680,9 +767,18 @@
 
         xml += `        </enveloppe>
         <systemes>
-            <chauffage>${building.systems.heating}</chauffage>
-            <ecs>${building.systems.dhw}</ecs>
-            <ventilation>${building.systems.ventilation}</ventilation>
+            <chauffage>
+                <type>${building.systems.heating.type}</type>
+                <annee_installation>${building.systems.heating.year}</annee_installation>
+            </chauffage>
+            <ecs>
+                <type>${building.systems.dhw.type}</type>
+                <annee_installation>${building.systems.dhw.year}</annee_installation>
+            </ecs>
+            <ventilation>
+                <type>${building.systems.ventilation.type}</type>
+                <annee_installation>${building.systems.ventilation.year}</annee_installation>
+            </ventilation>
         </systemes>
     </logement>
     <resultats_calcul>

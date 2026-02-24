@@ -804,6 +804,11 @@
     }
 
     function addWall(roomId) { addElement(roomId, 'walls', { surface: 10, orientation: 'N', b: 1, material: 'parpaing', thickness: 20, insulationMaterial: 'none', insulationThickness: 0, year: 1990 }); }
+    function addRampant(roomId) { addElement(roomId, 'rampants', { surface: 10, orientation: 'N', b: 1, material: 'platre', thickness: 1.3, insulationMaterial: 'laine_verre', insulationThickness: 20, year: 2010 }); }
+    function addWindow(roomId) { addElement(roomId, 'windows', { surface: 1.5, orientation: 'N', b: 1, frame: 'pvc', glazing: 'double', shutters: true, year: 2000 }); }
+    function addDoor(roomId) { addElement(roomId, 'doors', { surface: 2, uValue: 3.5, b: 1, year: 2000 }); }
+    function addFloor(roomId) { addElement(roomId, 'floors', { surface: 10, b: 1, material: 'dalle_beton', thickness: 15, insulationMaterial: 'none', insulationThickness: 0, year: 1990 }); }
+    function addCeiling(roomId) { addElement(roomId, 'ceilings', { surface: 10, uValue: 0.3, b: 1, material: 'dalle_beton', year: 1990 }); }
 
     // --- Calculation Logic ---
 
@@ -1056,10 +1061,22 @@
                  instructions.push({ action: 'fill', selector: `#WallSurf_${rIdx}_${wIdx}`, value: w.surface });
             });
 
+            room.rampants.forEach((w, wIdx) => {
+                 instructions.push({ action: 'click', selector: '#BtnAddRampant' });
+                 instructions.push({ action: 'select', selector: `#RampMat_${rIdx}_${wIdx}`, value: w.material });
+                 instructions.push({ action: 'fill', selector: `#RampSurf_${rIdx}_${wIdx}`, value: w.surface });
+            });
+
             room.windows.forEach((w, wIdx) => {
                  instructions.push({ action: 'click', selector: '#BtnAddWindow' });
                  instructions.push({ action: 'select', selector: `#WinFrame_${rIdx}_${wIdx}`, value: w.frame });
                  instructions.push({ action: 'fill', selector: `#WinSurf_${rIdx}_${wIdx}`, value: w.surface });
+            });
+
+            room.floors.forEach((w, wIdx) => {
+                 instructions.push({ action: 'click', selector: '#BtnAddFloor' });
+                 instructions.push({ action: 'select', selector: `#FloorMat_${rIdx}_${wIdx}`, value: w.material });
+                 instructions.push({ action: 'fill', selector: `#FloorSurf_${rIdx}_${wIdx}`, value: w.surface });
             });
         });
 

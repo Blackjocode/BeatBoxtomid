@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logiciel Audit Énergétique - Type CapRenov</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            background-color: #f0f2f5;
+            color: #333;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 20px auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            display: flex;
+            gap: 20px;
+        }
+        .main-content {
+            flex: 3;
+        }
+        .sidebar {
+            flex: 1;
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid #e9ecef;
+            height: fit-content;
+            position: sticky;
+            top: 20px;
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+        }
+        h2 {
+            color: #34495e;
+            margin-top: 0;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        h3 {
+            color: #7f8c8d;
+            font-size: 1.1em;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
+        h4 {
+            margin: 10px 0;
+            color: #2980b9;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e1e4e8;
+            border-radius: 8px;
+            background-color: #fff;
+        }
+        .audit-mode {
+            background-color: #fff8e1; /* Light yellow for audit */
+            border: 1px solid #ffe0b2;
+        }
+        .room {
+            margin-bottom: 20px;
+            padding: 20px;
+            border: 1px solid #dcdcdc;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            position: relative;
+        }
+        .element-group {
+            margin-left: 15px;
+            margin-bottom: 15px;
+            padding: 15px;
+            border-left: 4px solid #3498db;
+            background-color: #fff;
+            border-radius: 0 8px 8px 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .element-item {
+            border-bottom: 1px solid #f0f0f0;
+            padding: 10px 0;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .element-item:last-child {
+            border-bottom: none;
+        }
+        label {
+            font-weight: 600;
+            font-size: 0.9em;
+            color: #555;
+            display: block;
+            margin-bottom: 2px;
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+        input, select, textarea {
+            padding: 8px 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 0.9em;
+            transition: border-color 0.2s;
+        }
+        input:focus, select:focus, textarea:focus {
+            border-color: #3498db;
+            outline: none;
+        }
+        input[type="number"] {
+            width: 80px;
+        }
+        button {
+            padding: 8px 15px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.2s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        button.remove {
+            background-color: #e74c3c;
+            padding: 4px 10px;
+            font-size: 0.8em;
+        }
+        button.remove:hover {
+            background-color: #c0392b;
+        }
+        button.ai-action {
+            background-color: #8e44ad; /* Purple for AI */
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        button.ai-action:hover {
+            background-color: #732d91;
+        }
+        #results {
+            background-color: #e8f5e9;
+            border: 1px solid #c8e6c9;
+            padding: 25px;
+        }
+        .result-box {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .result-item {
+            flex: 1;
+            text-align: center;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            min-width: 200px;
+        }
+        .dpe-label {
+            font-size: 3.5em;
+            font-weight: 800;
+            display: inline-block;
+            padding: 15px 30px;
+            border-radius: 8px;
+            color: white;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+            margin-top: 15px;
+        }
+        .class-A { background-color: #009933; }
+        .class-B { background-color: #33cc33; }
+        .class-C { background-color: #ccff33; color: #333; text-shadow: none; }
+        .class-D { background-color: #ffff33; color: #333; text-shadow: none; }
+        .class-E { background-color: #ffcc00; }
+        .class-F { background-color: #ff9900; }
+        .class-G { background-color: #ff3300; }
+
+        /* Chart Styles */
+        .chart-container {
+            width: 100%;
+            max-width: 400px;
+            margin: 20px auto;
+            position: relative;
+        }
+        .pie-chart {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: conic-gradient(
+                #e74c3c var(--p-murs, 0deg) var(--deg-murs, 0deg),
+                #3498db var(--deg-murs, 0deg) var(--deg-vitrage, 0deg),
+                #f1c40f var(--deg-vitrage, 0deg) var(--deg-toit, 0deg),
+                #9b59b6 var(--deg-toit, 0deg) var(--deg-sol, 0deg),
+                #2ecc71 var(--deg-sol, 0deg) var(--deg-vent, 0deg),
+                #95a5a6 var(--deg-vent, 0deg) 360deg
+            );
+            margin: 0 auto;
+        }
+        .chart-legend {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 15px;
+            font-size: 0.9em;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .color-box {
+            width: 15px;
+            height: 15px;
+            border-radius: 3px;
+        }
+
+        /* AI Panel */
+        .ai-panel {
+            background: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .ai-suggestion {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 10px;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+        }
+        .ai-scenario {
+            background-color: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            padding: 10px;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+        }
+
+        /* Quote Section */
+        .quote-item {
+            background: #fdfdfe;
+            border: 1px solid #eee;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+
+        /* Audit Table */
+        .audit-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        .audit-table th, .audit-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        .audit-table th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="main-content">
+        <h1>Logiciel Audit Énergétique - Type CapRenov</h1>
+
+        <!-- Toggle Mode -->
+        <div style="margin-bottom: 20px;">
+            <button onclick="switchMode('dpe')" id="btn-mode-dpe" style="background-color:#2c3e50;">Mode DPE (Réglementaire)</button>
+            <button onclick="switchMode('audit')" id="btn-mode-audit" style="background-color:#ccc;">Mode Audit (Facture Réelle)</button>
+        </div>
+
+        <!-- Audit Specific Data -->
+        <div class="section audit-mode" id="audit-data" style="display:none;">
+            <h2>Données Comportementales & Financières</h2>
+            <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                <div class="input-group">
+                    <label>Nb Occupants</label>
+                    <input type="number" id="occupants" value="4" onchange="building.audit.occupants=this.value">
+                </div>
+                <div class="input-group">
+                    <label>Consigne Chauffage (°C)</label>
+                    <input type="number" id="setpoint-heating" value="20" step="0.5" onchange="building.audit.setpointHeating=this.value">
+                </div>
+                <div class="input-group">
+                    <label>Prix Élec (€/kWh)</label>
+                    <input type="number" id="price-elec" value="0.22" step="0.01" onchange="building.audit.energyPrices.electric=this.value">
+                </div>
+                <div class="input-group">
+                    <label>Prix Gaz (€/kWh)</label>
+                    <input type="number" id="price-gas" value="0.10" step="0.01" onchange="building.audit.energyPrices.gas=this.value">
+                </div>
+                <div class="input-group">
+                    <label>Inflation Énergie (%)</label>
+                    <input type="number" id="inflation" value="3" step="0.5" onchange="building.audit.inflation=this.value">
+                </div>
+            </div>
+        </div>
+
+        <!-- Building General Data -->
+        <div class="section" id="building-data">
+            <h2>Données Bâtiment</h2>
+            <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                <div class="input-group">
+                    <label>Altitude (m)</label>
+                    <input type="number" id="altitude" value="0" onchange="building.altitude=this.value">
+                </div>
+                <div class="input-group">
+                    <label>Année Const.</label>
+                    <input type="number" id="construction-year" value="1990" onchange="building.constructionYear=this.value">
+                </div>
+                <div class="input-group">
+                    <label>Zone Climatique</label>
+                    <select id="climate-zone" onchange="building.climateZone=this.value">
+                        <option value="H1a">H1a (Nord/Est)</option>
+                        <option value="H1b">H1b (Centre/Est)</option>
+                        <option value="H1c">H1c (Ouest)</option>
+                        <option value="H2a">H2a (Bretagne)</option>
+                        <option value="H2b">H2b (Sud-Ouest)</option>
+                        <option value="H2c">H2c (Sud-Ouest Terre)</option>
+                        <option value="H2d">H2d (Sud-Est)</option>
+                        <option value="H3">H3 (Côte Azur/Corse)</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Surface Habitable (m²)</label>
+                    <input type="number" id="shab" value="100" onchange="building.shab=this.value">
+                </div>
+                <div class="input-group">
+                    <label>HSP (m)</label>
+                    <input type="number" id="hsp" value="2.5" onchange="building.hsp=this.value">
+                </div>
+            </div>
+        </div>
+
+        <!-- Systems Section -->
+        <div class="section" id="systems-data">
+            <h2>Systèmes</h2>
+            <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                <div class="element-group" style="flex:1;">
+                    <h4>Chauffage</h4>
+                    <div class="input-group">
+                        <label>Générateur</label>
+                        <select id="heating-type" onchange="building.systems.heating.type=this.value">
+                            <option value="electric">Convecteur Électrique (Effet Joule)</option>
+                            <option value="gas_boiler_std">Chaudière Gaz Standard</option>
+                            <option value="gas_boiler_cond">Chaudière Gaz Condensation</option>
+                            <option value="oil_boiler">Chaudière Fioul</option>
+                            <option value="heat_pump">Pompe à Chaleur Air/Eau</option>
+                            <option value="wood_stove">Poêle à Bois</option>
+                        </select>
+                    </div>
+                    <div class="input-group" style="margin-top:10px;">
+                        <label>Année Installation</label>
+                        <input type="number" value="2010" onchange="building.systems.heating.year=this.value">
+                    </div>
+                </div>
+                <div class="element-group" style="flex:1;">
+                    <h4>Eau Chaude Sanitaire (ECS)</h4>
+                     <div class="input-group">
+                        <label>Générateur</label>
+                        <select id="dhw-type" onchange="building.systems.dhw.type=this.value">
+                            <option value="electric_cumulus">Cumulus Électrique (Blindé/Stéatite)</option>
+                            <option value="gas_instant">Chauffe-eau Gaz Instantané</option>
+                            <option value="thermodynamic">Chauffe-eau Thermodynamique (CET)</option>
+                            <option value="connected">Production liée au Chauffage</option>
+                        </select>
+                    </div>
+                    <div class="input-group" style="margin-top:10px;">
+                        <label>Année Installation</label>
+                        <input type="number" value="2010" onchange="building.systems.dhw.year=this.value">
+                    </div>
+                </div>
+                 <div class="element-group" style="flex:1;">
+                    <h4>Ventilation</h4>
+                     <div class="input-group">
+                        <label>Système</label>
+                        <select id="ventilation-type" onchange="building.systems.ventilation.type=this.value">
+                            <option value="natural">Ventilation Naturelle (Grilles)</option>
+                            <option value="vmc_sf_auto">VMC Simple Flux Autoréglable</option>
+                            <option value="vmc_sf_hygro">VMC Simple Flux Hygro A/B</option>
+                            <option value="vmc_df">VMC Double Flux</option>
+                        </select>
+                    </div>
+                    <div class="input-group" style="margin-top:10px;">
+                        <label>Année Installation</label>
+                        <input type="number" value="2010" onchange="building.systems.ventilation.year=this.value">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rooms Section -->
+        <div class="section" id="rooms-container">
+            <h2>Saisie Pièce par Pièce</h2>
+            <div id="rooms-list"></div>
+            <button onclick="addRoom()" style="margin-top: 15px; font-size: 1.1em; padding: 10px 20px;">+ Ajouter une Pièce</button>
+        </div>
+
+        <!-- Devis / Quotes Section -->
+        <div class="section" id="quotes-container">
+            <h2>Devis & Scénarios</h2>
+            <p style="color:#666; font-size:0.9em;">Saisissez les devis pour alimenter l'analyse IA et les scénarios de rénovation.</p>
+            <div id="quotes-list"></div>
+            <button onclick="addQuote()" style="margin-top: 10px;">+ Ajouter un Devis</button>
+        </div>
+
+        <!-- Results Section -->
+        <div class="section" id="results">
+            <h2>Résultats</h2>
+            <button onclick="calculate()" style="font-size: 1.2em; padding: 12px 25px; background-color: #27ae60;">Lancer le Calcul</button>
+
+            <div id="calculation-output" style="margin-top: 30px; display: none;">
+                <!-- DPE Results -->
+                <div class="result-box">
+                    <div class="result-item">
+                        <h4>Étiquette Énergie</h4>
+                        <div id="dpe-grade" class="dpe-label class-G">G</div>
+                        <p style="font-size: 1.2em; font-weight:bold;"><span id="res-cep">0</span> kWh/m²/an</p>
+                    </div>
+                    <div class="result-item">
+                        <h4>Étiquette Climat</h4>
+                        <div id="ges-grade" class="dpe-label class-G">G</div>
+                        <p style="font-size: 1.2em; font-weight:bold;"><span id="res-ges">0</span> kgCO2/m²/an</p>
+                    </div>
+                     <div class="result-item" style="flex: 2;">
+                        <h4>Répartition des Déperditions</h4>
+                        <div class="chart-container">
+                            <div class="pie-chart" id="loss-chart"></div>
+                            <div class="chart-legend">
+                                <div class="legend-item"><div class="color-box" style="background:#e74c3c"></div> Murs</div>
+                                <div class="legend-item"><div class="color-box" style="background:#3498db"></div> Vitrage</div>
+                                <div class="legend-item"><div class="color-box" style="background:#f1c40f"></div> Toiture</div>
+                                <div class="legend-item"><div class="color-box" style="background:#9b59b6"></div> Sol</div>
+                                <div class="legend-item"><div class="color-box" style="background:#2ecc71"></div> Ventil</div>
+                                <div class="legend-item"><div class="color-box" style="background:#95a5a6"></div> Ponts Th.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Audit Results -->
+                <div id="audit-results" style="margin-top: 30px; border-top: 1px solid #ccc; padding-top: 20px; display:none;">
+                    <h3>Bilan Financier & Rentabilité (Audit)</h3>
+                    <p>Coût Énergie Actuel (Est.): <strong id="current-cost">0</strong> €/an</p>
+
+                    <table class="audit-table">
+                        <thead>
+                            <tr>
+                                <th>Scénario</th>
+                                <th>Investissement</th>
+                                <th>Économie Annuelle</th>
+                                <th>Retour sur Invest. (ROI)</th>
+                                <th>Nouvelle Étiquette</th>
+                            </tr>
+                        </thead>
+                        <tbody id="audit-scenario-list">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div style="margin-top: 30px; border-top: 1px solid #ccc; padding-top: 20px;">
+                    <h3>Détails Techniques</h3>
+                    <p><strong>Déperditions Totales (Ht):</strong> <span id="res-ht">0</span> W/K</p>
+                    <p><strong>Besoins Chauffage:</strong> <span id="res-heat-needs">0</span> kWh/an</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Export Section -->
+        <div class="section">
+            <h2>Exports & Intégrations</h2>
+            <div style="display: flex; gap: 10px;">
+                <button onclick="generateXML()">Générer XML ADEME</button>
+                <button onclick="generateBotScript()">Générer Script Bot (DPEWin)</button>
+            </div>
+            <textarea id="xml-output" rows="10" style="width: 100%; margin-top: 15px; font-family: monospace; border:1px solid #ccc; padding:10px;" readonly placeholder="Sortie XML..."></textarea>
+            <textarea id="bot-output" rows="10" style="width: 100%; margin-top: 15px; font-family: monospace; border:1px solid #ccc; padding:10px; display:none;" readonly placeholder="Sortie Script Bot..."></textarea>
+        </div>
+    </div>
+
+    <!-- Sidebar: AI Assistant -->
+    <div class="sidebar">
+        <h2>🤖 Assistant IA</h2>
+        <div class="ai-panel">
+            <h3>Cohérence Saisie</h3>
+            <div id="ai-consistency-check">
+                <p style="color:#777;">En attente de calcul...</p>
+            </div>
+            <button class="ai-action" onclick="runAICheck()">Analyser la saisie</button>
+        </div>
+
+        <div class="ai-panel">
+            <h3>Scénarios Auto</h3>
+            <div id="ai-scenarios">
+                <p style="color:#777;">Ajoutez des devis pour générer des scénarios.</p>
+            </div>
+            <button class="ai-action" onclick="generateScenarios()">Générer Scénarios</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- Data Model ---
+
+    const LAMBDA = {
+        'parpaing': 1.05, 'pierre': 2.3, 'brique': 0.8, 'beton': 1.7, 'bois': 0.15, 'platre': 0.35,
+        'laine_verre': 0.035, 'polystyrene': 0.038, 'laine_roche': 0.040, 'ouate': 0.040, 'polyurethane': 0.025, 'air': 0.025, 'none': 0
+    };
+
+    const R_SURF = { 'mur': 0.17, 'toit': 0.14, 'sol': 0.17 };
+
+    let building = {
+        mode: 'dpe', // dpe or audit
+        altitude: 0,
+        constructionYear: 1990,
+        climateZone: 'H1a',
+        shab: 100,
+        hsp: 2.5,
+        rooms: [],
+        systems: {
+            heating: { type: 'electric', year: 2010 },
+            dhw: { type: 'electric_cumulus', year: 2010 },
+            ventilation: { type: 'natural', year: 2010 }
+        },
+        quotes: [],
+        audit: {
+            occupants: 4,
+            setpointHeating: 20,
+            inflation: 3,
+            energyPrices: {
+                electric: 0.22,
+                gas: 0.10,
+                oil: 0.12,
+                wood: 0.08
+            }
+        }
+    };
+
+    function generateId() { return Math.random().toString(36).substr(2, 9); }
+
+    function switchMode(mode) {
+        building.mode = mode;
+        if(mode === 'dpe') {
+            document.getElementById('btn-mode-dpe').style.backgroundColor = '#2c3e50';
+            document.getElementById('btn-mode-dpe').style.color = 'white';
+            document.getElementById('btn-mode-audit').style.backgroundColor = '#ccc';
+            document.getElementById('audit-data').style.display = 'none';
+            document.getElementById('audit-results').style.display = 'none';
+        } else {
+            document.getElementById('btn-mode-audit').style.backgroundColor = '#2c3e50';
+            document.getElementById('btn-mode-audit').style.color = 'white';
+            document.getElementById('btn-mode-dpe').style.backgroundColor = '#ccc';
+            document.getElementById('audit-data').style.display = 'block';
+            document.getElementById('audit-results').style.display = 'block';
+        }
+    }
+
+    // --- Logic: U-Value Calculation ---
+
+    function calculateU(element, type) {
+        if (type === 'windows') {
+            const Uw_base = { 'simple': 5.8, 'double': 2.8, 'double_argon': 1.1, 'triple': 0.8 };
+            const Mat_factor = { 'bois': 0.8, 'pvc': 0.9, 'alu': 1.2, 'metal': 1.5 };
+            let uw = Uw_base[element.glazing] || 2.8;
+            uw = uw * (Mat_factor[element.frame] || 1);
+            if (element.shutters) uw = uw * 0.8;
+            return parseFloat(uw.toFixed(2));
+        }
+        if (type === 'doors') return element.uValue || 3.5;
+
+        let R_mat = (element.thickness / 100) / (LAMBDA[element.material] || 1.0);
+        let R_ins = 0;
+        if (element.insulationMaterial && element.insulationMaterial !== 'none') {
+            R_ins = (element.insulationThickness / 100) / (LAMBDA[element.insulationMaterial] || 0.04);
+        }
+        let R_total = R_mat + R_ins + (R_SURF[type === 'floors' ? 'sol' : (type === 'rampants' || type === 'ceilings' ? 'toit' : 'mur')]);
+        return parseFloat((1 / R_total).toFixed(2));
+    }
+
+    // --- UI Logic (Room & Element Management) ---
+    // (Reusing same functions as before: addRoom, addElement, updateElement, renderRooms...)
+
+    function init() { addRoom(); }
+
+    function addRoom() {
+        const room = { id: generateId(), name: `Pièce ${building.rooms.length + 1}`, surface: 10, walls: [], windows: [], doors: [], floors: [], ceilings: [], rampants: [] };
+        building.rooms.push(room);
+        renderRooms();
+    }
+    function removeRoom(id) { if(confirm("Supprimer?")) { building.rooms = building.rooms.filter(r => r.id !== id); renderRooms(); } }
+    function updateRoom(id, f, v) { const r = building.rooms.find(x => x.id === id); if(r) r[f]=v; }
+    function addElement(rid, type, props) { const r = building.rooms.find(x => x.id === rid); if(r) { r[type].push({id:generateId(), ...props}); renderRooms(); } }
+    function removeElement(rid, type, eid) { const r = building.rooms.find(x => x.id === rid); if(r) { r[type] = r[type].filter(e => e.id !== eid); renderRooms(); } }
+    function updateElement(rid, type, eid, f, v) { const r = building.rooms.find(x => x.id === rid); if(r) { const e = r[type].find(y => y.id === eid); if(e) e[f]=v; renderRooms(); } }
+
+    function addQuote() {
+        building.quotes.push({ id: generateId(), description: "Reno", type: "insulation", cost: 1000 });
+        renderQuotes();
+    }
+    function renderQuotes() {
+        const c = document.getElementById('quotes-list'); c.innerHTML = '';
+        building.quotes.forEach(q => {
+            const d = document.createElement('div'); d.className='quote-item';
+            d.innerHTML = `<div style="display:flex; justify-content:space-between;"><input type="text" value="${q.description}" onchange="updateQuote('${q.id}','description',this.value)" style="flex:2;"><input type="number" value="${q.cost}" onchange="updateQuote('${q.id}','cost',this.value)" placeholder="€"></div>`;
+            c.appendChild(d);
+        });
+    }
+    function updateQuote(id, f, v) { const q = building.quotes.find(x => x.id === id); if(q) q[f]=v; }
+
+    function renderRooms() {
+        const container = document.getElementById('rooms-list');
+        container.innerHTML = '';
+        building.rooms.forEach((room) => {
+            const roomDiv = document.createElement('div');
+            roomDiv.className = 'room';
+
+            let html = `
+                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #ccc; padding-bottom:10px; margin-bottom:15px;">
+                    <h3 style="margin:0; border:none; color:#34495e;">${room.name}</h3>
+                    <button class="remove" onclick="removeRoom('${room.id}')">Supprimer Pièce</button>
+                </div>
+                <div style="margin-bottom: 20px; display:flex; gap:20px;">
+                    <div class="input-group">
+                        <label>Nom de la pièce</label>
+                        <input type="text" value="${room.name}" onchange="updateRoom('${room.id}', 'name', this.value)">
+                    </div>
+                    <div class="input-group">
+                        <label>Surface Sol (m²)</label>
+                        <input type="number" step="0.1" value="${room.surface}" onchange="updateRoom('${room.id}', 'surface', this.value)">
+                    </div>
+                </div>
+                <div style="display:flex; flex-wrap:wrap;">
+            `;
+
+            // Walls
+            html += `<div class="element-group"><h4>Murs <button onclick="addWall('${room.id}')" title="Ajouter Mur">+</button></h4>`;
+            room.walls.forEach(w => {
+                const u = calculateU(w, 'walls');
+                html += `
+                    <div class="element-item">
+                        <div class="input-group"><label>Surf(m²)</label><input type="number" step="0.1" value="${w.surface}" onchange="updateElement('${room.id}', 'walls', '${w.id}', 'surface', parseFloat(this.value))"></div>
+                        <div class="input-group"><label>Orient</label>
+                            <select style="width:60px" onchange="updateElement('${room.id}', 'walls', '${w.id}', 'orientation', this.value)">
+                                <option value="N" ${w.orientation === 'N' ? 'selected' : ''}>N</option>
+                                <option value="S" ${w.orientation === 'S' ? 'selected' : ''}>S</option>
+                                <option value="E" ${w.orientation === 'E' ? 'selected' : ''}>E</option>
+                                <option value="O" ${w.orientation === 'O' ? 'selected' : ''}>O</option>
+                            </select>
+                        </div>
+                        <div class="input-group"><label>Matériau</label>
+                            <select onchange="updateElement('${room.id}', 'walls', '${w.id}', 'material', this.value)">
+                                <option value="parpaing" ${w.material === 'parpaing' ? 'selected' : ''}>Parpaing</option>
+                                <option value="pierre" ${w.material === 'pierre' ? 'selected' : ''}>Pierre</option>
+                                <option value="brique" ${w.material === 'brique' ? 'selected' : ''}>Brique</option>
+                                <option value="beton" ${w.material === 'beton' ? 'selected' : ''}>Béton</option>
+                                <option value="bois" ${w.material === 'bois' ? 'selected' : ''}>Bois</option>
+                            </select>
+                        </div>
+                        <div class="input-group"><label>Ép(cm)</label><input type="number" value="${w.thickness}" onchange="updateElement('${room.id}', 'walls', '${w.id}', 'thickness', parseFloat(this.value))"></div>
+
+                        <div class="input-group"><label>Isolant</label>
+                            <select onchange="updateElement('${room.id}', 'walls', '${w.id}', 'insulationMaterial', this.value)">
+                                <option value="none" ${w.insulationMaterial === 'none' ? 'selected' : ''}>Aucun</option>
+                                <option value="laine_verre" ${w.insulationMaterial === 'laine_verre' ? 'selected' : ''}>Laine de Verre</option>
+                                <option value="polystyrene" ${w.insulationMaterial === 'polystyrene' ? 'selected' : ''}>Polystyrène</option>
+                                <option value="laine_roche" ${w.insulationMaterial === 'laine_roche' ? 'selected' : ''}>Laine Roche</option>
+                            </select>
+                        </div>
+                        <div class="input-group"><label>Ép.Iso(cm)</label><input type="number" value="${w.insulationThickness}" onchange="updateElement('${room.id}', 'walls', '${w.id}', 'insulationThickness', parseFloat(this.value))"></div>
+
+                        <div class="input-group"><label>U (Calculé)</label><input type="text" value="${u}" disabled style="background:#eee; width:50px;"></div>
+
+                        <button class="remove" onclick="removeElement('${room.id}', 'walls', '${w.id}')">X</button>
+                    </div>`;
+            });
+            html += `</div>`;
+
+            // Rampants
+            html += `<div class="element-group"><h4>Rampants <button onclick="addRampant('${room.id}')" title="Ajouter Rampant">+</button></h4>`;
+            room.rampants.forEach(w => {
+                const u = calculateU(w, 'rampants');
+                html += `
+                    <div class="element-item">
+                        <div class="input-group"><label>Surf(m²)</label><input type="number" step="0.1" value="${w.surface}" onchange="updateElement('${room.id}', 'rampants', '${w.id}', 'surface', parseFloat(this.value))"></div>
+                        <div class="input-group"><label>Orient</label>
+                            <select style="width:60px" onchange="updateElement('${room.id}', 'rampants', '${w.id}', 'orientation', this.value)">
+                                <option value="N" ${w.orientation === 'N' ? 'selected' : ''}>N</option>
+                                <option value="S" ${w.orientation === 'S' ? 'selected' : ''}>S</option>
+                                <option value="E" ${w.orientation === 'E' ? 'selected' : ''}>E</option>
+                                <option value="O" ${w.orientation === 'O' ? 'selected' : ''}>O</option>
+                            </select>
+                        </div>
+                        <div class="input-group"><label>Struct.</label>
+                            <select onchange="updateElement('${room.id}', 'rampants', '${w.id}', 'material', this.value)">
+                                <option value="platre" ${w.material === 'platre' ? 'selected' : ''}>Plâtre</option>
+                                <option value="bois" ${w.material === 'bois' ? 'selected' : ''}>Bois</option>
+                            </select>
+                        </div>
+                        <div class="input-group"><label>Isolant</label>
+                            <select onchange="updateElement('${room.id}', 'rampants', '${w.id}', 'insulationMaterial', this.value)">
+                                <option value="none" ${w.insulationMaterial === 'none' ? 'selected' : ''}>Aucun</option>
+                                <option value="laine_verre" ${w.insulationMaterial === 'laine_verre' ? 'selected' : ''}>Laine de Verre</option>
+                                <option value="laine_roche" ${w.insulationMaterial === 'laine_roche' ? 'selected' : ''}>Laine Roche</option>
+                            </select>
+                        </div>
+                        <div class="input-group"><label>Ép.Iso(cm)</label><input type="number" value="${w.insulationThickness}" onchange="updateElement('${room.id}', 'rampants', '${w.id}', 'insulationThickness', parseFloat(this.value))"></div>
+                         <div class="input-group"><label>U (Calc)</label><input type="text" value="${u}" disabled style="background:#eee; width:50px;"></div>
+                        <button class="remove" onclick="removeElement('${room.id}', 'rampants', '${w.id}')">X</button>
+                    </div>`;
+            });
+            html += `</div>`;
+
+            // Windows
+            html += `<div class="element-group"><h4>Fenêtres <button onclick="addWindow('${room.id}')" title="Ajouter Fenêtre">+</button></h4>`;
+            room.windows.forEach(w => {
+                const u = calculateU(w, 'windows');
+                html += `
+                    <div class="element-item">
+                        <div class="input-group"><label>Surf(m²)</label><input type="number" step="0.1" value="${w.surface}" onchange="updateElement('${room.id}', 'windows', '${w.id}', 'surface', parseFloat(this.value))"></div>
+                        <div class="input-group"><label>Orient</label>
+                            <select style="width:60px" onchange="updateElement('${room.id}', 'windows', '${w.id}', 'orientation', this.value)">
+                                <option value="N" ${w.orientation === 'N' ? 'selected' : ''}>N</option>
+                                <option value="S" ${w.orientation === 'S' ? 'selected' : ''}>S</option>
+                                <option value="E" ${w.orientation === 'E' ? 'selected' : ''}>E</option>
+                                <option value="O" ${w.orientation === 'O' ? 'selected' : ''}>O</option>
+                            </select>
+                        </div>
+                        <div class="input-group"><label>Menuiserie</label>
+                            <select onchange="updateElement('${room.id}', 'windows', '${w.id}', 'frame', this.value)">
+                                <option value="pvc" ${w.frame === 'pvc' ? 'selected' : ''}>PVC</option>
+                                <option value="bois" ${w.frame === 'bois' ? 'selected' : ''}>Bois</option>
+                                <option value="alu" ${w.frame === 'alu' ? 'selected' : ''}>Alu</option>
+                                <option value="metal" ${w.frame === 'metal' ? 'selected' : ''}>Métal</option>
+                            </select>
+                        </div>
+                        <div class="input-group"><label>Vitrage</label>
+                            <select onchange="updateElement('${room.id}', 'windows', '${w.id}', 'glazing', this.value)">
+                                <option value="simple" ${w.glazing === 'simple' ? 'selected' : ''}>Simple</option>
+                                <option value="double" ${w.glazing === 'double' ? 'selected' : ''}>Double</option>
+                                <option value="triple" ${w.glazing === 'triple' ? 'selected' : ''}>Triple</option>
+                            </select>
+                        </div>
+                        <div class="input-group"><label>Volets?</label>
+                            <input type="checkbox" ${w.shutters ? 'checked' : ''} onchange="updateElement('${room.id}', 'windows', '${w.id}', 'shutters', this.checked)">
+                        </div>
+                        <div class="input-group"><label>Uw</label><input type="text" value="${u}" disabled style="background:#eee; width:50px;"></div>
+                        <button class="remove" onclick="removeElement('${room.id}', 'windows', '${w.id}')">X</button>
+                    </div>`;
+            });
+            html += `</div>`;
+
+             // Floors
+             html += `<div class="element-group"><h4>Plancher Bas <button onclick="addFloor('${room.id}')">+</button></h4>`;
+            room.floors.forEach(w => {
+                 const u = calculateU(w, 'floors');
+                html += `
+                    <div class="element-item">
+                        <div class="input-group"><label>Surf(m²)</label><input type="number" step="0.1" value="${w.surface}" onchange="updateElement('${room.id}', 'floors', '${w.id}', 'surface', parseFloat(this.value))"></div>
+                        <div class="input-group"><label>Matériau</label>
+                             <select onchange="updateElement('${room.id}', 'floors', '${w.id}', 'material', this.value)">
+                                <option value="dalle_beton" ${w.material === 'dalle_beton' ? 'selected' : ''}>Dalle Béton</option>
+                                <option value="plancher_bois" ${w.material === 'plancher_bois' ? 'selected' : ''}>Plancher Bois</option>
+                            </select>
+                        </div>
+                        <div class="input-group"><label>Isolant</label>
+                             <select onchange="updateElement('${room.id}', 'floors', '${w.id}', 'insulationMaterial', this.value)">
+                                <option value="none" ${w.insulationMaterial === 'none' ? 'selected' : ''}>Aucun</option>
+                                <option value="polystyrene" ${w.insulationMaterial === 'polystyrene' ? 'selected' : ''}>Polystyrène</option>
+                                <option value="polyurethane" ${w.insulationMaterial === 'polyurethane' ? 'selected' : ''}>Polyuréthane</option>
+                            </select>
+                        </div>
+                        <div class="input-group"><label>Ép.Iso(cm)</label><input type="number" value="${w.insulationThickness}" onchange="updateElement('${room.id}', 'floors', '${w.id}', 'insulationThickness', parseFloat(this.value))"></div>
+                        <div class="input-group"><label>U (Calc)</label><input type="text" value="${u}" disabled style="background:#eee; width:50px;"></div>
+                        <button class="remove" onclick="removeElement('${room.id}', 'floors', '${w.id}')">X</button>
+                    </div>`;
+            });
+            html += `</div>`;
+
+            html += `</div>`; // End flex wrap
+
+            roomDiv.innerHTML = html;
+            container.appendChild(roomDiv);
+        });
+    }
+
+    function addWall(roomId) { addElement(roomId, 'walls', { surface: 10, orientation: 'N', b: 1, material: 'parpaing', thickness: 20, insulationMaterial: 'none', insulationThickness: 0, year: 1990 }); }
+    function addRampant(roomId) { addElement(roomId, 'rampants', { surface: 10, orientation: 'N', b: 1, material: 'platre', thickness: 1.3, insulationMaterial: 'laine_verre', insulationThickness: 20, year: 2010 }); }
+    function addWindow(roomId) { addElement(roomId, 'windows', { surface: 1.5, orientation: 'N', b: 1, frame: 'pvc', glazing: 'double', shutters: true, year: 2000 }); }
+    function addDoor(roomId) { addElement(roomId, 'doors', { surface: 2, uValue: 3.5, b: 1, year: 2000 }); }
+    function addFloor(roomId) { addElement(roomId, 'floors', { surface: 10, b: 1, material: 'dalle_beton', thickness: 15, insulationMaterial: 'none', insulationThickness: 0, year: 1990 }); }
+    function addCeiling(roomId) { addElement(roomId, 'ceilings', { surface: 10, uValue: 0.3, b: 1, material: 'dalle_beton', year: 1990 }); }
+
+    // --- Calculation Logic ---
+
+    function calculate() {
+        const shab = parseFloat(building.shab) || 1;
+        const hsp = parseFloat(building.hsp) || 2.5;
+        const volume = shab * hsp;
+        const dju = 2500; // Simplified DJU
+
+        // 1. Heat Loss (Ht)
+        let Ht_surf = 0;
+        building.rooms.forEach(room => {
+            room.walls.forEach(e => Ht_surf += (e.surface * calculateU(e, 'walls') * (e.b || 1)));
+            // ... (Add others)
+        });
+
+        let Ht = Ht_surf * 1.2; // +20% for vent/bridges (simplified)
+
+        // 2. Needs
+        // Audit Mode Adjustment: Intermittency & Setpoint
+        let T_base = 19; // DPE Standard
+        if(building.mode === 'audit') T_base = parseFloat(building.audit.setpointHeating);
+
+        // Adjust DJU roughly based on setpoint diff (1°C ~ 7-10% consumption)
+        let dju_adj = dju * (1 + (T_base - 19) * 0.1);
+
+        const needs_heating = (Ht * dju_adj * 24 / 1000) * 0.85 * 0.8; // Io * Gains
+        const needs_dhw = 20 * shab; // Standard
+
+        // Efficiency
+        const eff = 0.9; // Simplified
+        const conso_heating = needs_heating / eff;
+        const conso_dhw = needs_dhw / 0.9;
+
+        // 3. Financials (Audit Mode)
+        let annual_cost = 0;
+        if(building.mode === 'audit') {
+            const p_elec = parseFloat(building.audit.energyPrices.electric);
+            annual_cost = (conso_heating + conso_dhw) * p_elec; // Assume full electric for simplicity here
+            document.getElementById('current-cost').innerText = annual_cost.toFixed(0);
+        }
+
+        // Display DPE
+        document.getElementById('calculation-output').style.display = 'block';
+        document.getElementById('res-cep').innerText = ((conso_heating*2.3 + conso_dhw*2.3)/shab).toFixed(0);
+
+        if(building.mode === 'audit') {
+            generateROI(annual_cost);
+        }
+    }
+
+    function generateROI(currentCost) {
+        const tbody = document.getElementById('audit-scenario-list');
+        tbody.innerHTML = "";
+
+        if(building.quotes.length === 0) return;
+
+        const totalInvest = building.quotes.reduce((a,q)=>a+parseFloat(q.cost||0),0);
+        // Simulate Savings (very rough: 30% savings for renovation)
+        const savings = currentCost * 0.30;
+        const roi = totalInvest / savings;
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>Rénovation Globale</td>
+            <td>${totalInvest} €</td>
+            <td>${savings.toFixed(0)} €/an</td>
+            <td>${roi.toFixed(1)} ans</td>
+            <td>C (Simulé)</td>
+        `;
+        tbody.appendChild(tr);
+    }
+
+    // AI & Bot
+    function runAICheck() {
+        const checkDiv = document.getElementById('ai-consistency-check');
+        checkDiv.innerHTML = "";
+        let warnings = [];
+
+        // Rule 1: Insulation vs Year
+        if (building.constructionYear > 2000) {
+            building.rooms.forEach(r => {
+                r.walls.forEach(w => {
+                    if(!w.insulationMaterial || w.insulationMaterial === 'none') {
+                        warnings.push(`Pièce ${r.name}: Mur récent (post-2000) sans isolant détecté. Est-ce normal ?`);
+                    }
+                });
+            });
+        }
+
+        // Rule 2: Inconsistent U-values
+        building.rooms.forEach(r => {
+             r.walls.forEach(w => {
+                 const u = calculateU(w, 'walls');
+                 if(u > 3.0) warnings.push(`Pièce ${r.name}: Mur avec U très élevé (${u}). Vérifiez l'épaisseur ou le matériau.`);
+             });
+        });
+
+        if(warnings.length === 0) {
+            checkDiv.innerHTML = `<p style="color:green">✅ Aucune anomalie majeure détectée.</p>`;
+        } else {
+            warnings.forEach(w => {
+                const p = document.createElement('div');
+                p.className = 'ai-suggestion';
+                p.innerText = "⚠️ " + w;
+                checkDiv.appendChild(p);
+            });
+        }
+    }
+
+    function generateScenarios() {
+        const scnDiv = document.getElementById('ai-scenarios');
+        scnDiv.innerHTML = "";
+
+        if(building.quotes.length === 0) {
+            scnDiv.innerHTML = "<p>Veuillez saisir des devis pour générer des scénarios.</p>";
+            return;
+        }
+
+        const p = document.createElement('div');
+        p.className = 'ai-scenario';
+        const totalCost = building.quotes.reduce((acc, q) => acc + parseFloat(q.cost || 0), 0);
+        p.innerHTML = `<strong>Scénario Rénovation Globale</strong><br>Intègre ${building.quotes.length} améliorations.<br>Coût estimé: ${totalCost} €`;
+        scnDiv.appendChild(p);
+    }
+
+    function generateXML() {
+        let xml = `<?xml version="1.0" encoding="UTF-8"?>
+<dpe:dpe xmlns:dpe="http://www.ademe.fr/2013/dpe/v2" version="2.0">
+    <administratif>
+        <date_visite>${new Date().toISOString().split('T')[0]}</date_visite>
+        <commune>PARIS</commune>
+        <code_postal>75000</code_postal>
+    </administratif>
+    <logement>
+        <caracteristique_generale>
+            <annee_construction>${building.constructionYear}</annee_construction>
+            <surface_habitable>${building.shab}</surface_habitable>
+            <altitude>${building.altitude}</altitude>
+            <zone_climatique>${building.climateZone}</zone_climatique>
+        </caracteristique_generale>
+        <enveloppe>
+`;
+        building.rooms.forEach(room => {
+            xml += `            <piece id="${room.id}">
+                <nom>${room.name}</nom>
+                <surface>${room.surface}</surface>\n`;
+
+            // Walls
+            room.walls.forEach(w => {
+                xml += `                <mur id="${w.id}">
+                    <surface>${w.surface}</surface>
+                    <u_value>${calculateU(w, 'walls')}</u_value>
+                    <b_coef>${w.b}</b_coef>
+                    <orientation>${w.orientation}</orientation>
+                    <materiaux>${w.material}</materiaux>
+                    <epaisseur>${w.thickness}</epaisseur>
+                    <isolant>${w.insulationMaterial}</isolant>
+                    <epaisseur_isolant>${w.insulationThickness}</epaisseur_isolant>
+                    <annee_installation>${w.year}</annee_installation>
+                </mur>\n`;
+            });
+
+            // Rampants
+            room.rampants.forEach(w => {
+                xml += `                <rampant id="${w.id}">
+                    <surface>${w.surface}</surface>
+                    <u_value>${calculateU(w, 'rampants')}</u_value>
+                    <b_coef>${w.b}</b_coef>
+                    <orientation>${w.orientation}</orientation>
+                    <materiaux>${w.material}</materiaux>
+                    <isolant>${w.insulationMaterial}</isolant>
+                    <epaisseur_isolant>${w.insulationThickness}</epaisseur_isolant>
+                    <annee_installation>${w.year}</annee_installation>
+                </rampant>\n`;
+            });
+
+             // Windows
+            room.windows.forEach(w => {
+                xml += `                <baie_vitree id="${w.id}">
+                    <surface>${w.surface}</surface>
+                    <u_value>${calculateU(w, 'windows')}</u_value>
+                    <orientation>${w.orientation}</orientation>
+                    <menuiserie>${w.frame}</menuiserie>
+                    <vitrage>${w.glazing}</vitrage>
+                    <volets>${w.shutters}</volets>
+                    <annee_installation>${w.year}</annee_installation>
+                </baie_vitree>\n`;
+            });
+
+             // Floors
+            room.floors.forEach(w => {
+                xml += `                <plancher_bas id="${w.id}">
+                    <surface>${w.surface}</surface>
+                    <u_value>${calculateU(w, 'floors')}</u_value>
+                    <b_coef>${w.b}</b_coef>
+                    <materiaux>${w.material}</materiaux>
+                     <isolant>${w.insulationMaterial}</isolant>
+                    <epaisseur_isolant>${w.insulationThickness}</epaisseur_isolant>
+                    <annee_installation>${w.year}</annee_installation>
+                </plancher_bas>\n`;
+            });
+
+            xml += `            </piece>\n`;
+        });
+
+        xml += `        </enveloppe>
+        <systemes>
+            <chauffage>
+                <type>${building.systems.heating.type}</type>
+                <annee_installation>${building.systems.heating.year}</annee_installation>
+            </chauffage>
+            <ecs>
+                <type>${building.systems.dhw.type}</type>
+                <annee_installation>${building.systems.dhw.year}</annee_installation>
+            </ecs>
+            <ventilation>
+                <type>${building.systems.ventilation.type}</type>
+                <annee_installation>${building.systems.ventilation.year}</annee_installation>
+            </ventilation>
+        </systemes>
+    </logement>
+    <resultats_calcul>
+        <consommation_energie_primaire>${document.getElementById('res-cep').innerText}</consommation_energie_primaire>
+        <classe_dpe>${document.getElementById('dpe-grade').innerText}</classe_dpe>
+        <emission_ges>${document.getElementById('res-ges').innerText}</emission_ges>
+        <classe_ges>${document.getElementById('ges-grade').innerText}</classe_ges>
+    </resultats_calcul>
+</dpe:dpe>`;
+
+        document.getElementById('xml-output').value = xml;
+        document.getElementById('xml-output').style.display = 'block';
+    }
+
+    function generateBotScript() {
+        const instructions = [];
+
+        // General Data
+        instructions.push({ action: 'fill', selector: '#AnneeConstruction', value: building.constructionYear });
+        instructions.push({ action: 'fill', selector: '#SurfaceHabitable', value: building.shab });
+
+        // Rooms and Elements
+        building.rooms.forEach((room, rIdx) => {
+            instructions.push({ action: 'click', selector: '#BtnAddRoom' });
+            instructions.push({ action: 'fill', selector: `#RoomName_${rIdx}`, value: room.name });
+
+            room.walls.forEach((w, wIdx) => {
+                 instructions.push({ action: 'click', selector: '#BtnAddWall' });
+                 instructions.push({ action: 'select', selector: `#WallMat_${rIdx}_${wIdx}`, value: w.material });
+                 instructions.push({ action: 'fill', selector: `#WallSurf_${rIdx}_${wIdx}`, value: w.surface });
+            });
+
+            room.rampants.forEach((w, wIdx) => {
+                 instructions.push({ action: 'click', selector: '#BtnAddRampant' });
+                 instructions.push({ action: 'select', selector: `#RampMat_${rIdx}_${wIdx}`, value: w.material });
+                 instructions.push({ action: 'fill', selector: `#RampSurf_${rIdx}_${wIdx}`, value: w.surface });
+            });
+
+            room.windows.forEach((w, wIdx) => {
+                 instructions.push({ action: 'click', selector: '#BtnAddWindow' });
+                 instructions.push({ action: 'select', selector: `#WinFrame_${rIdx}_${wIdx}`, value: w.frame });
+                 instructions.push({ action: 'fill', selector: `#WinSurf_${rIdx}_${wIdx}`, value: w.surface });
+            });
+
+            room.floors.forEach((w, wIdx) => {
+                 instructions.push({ action: 'click', selector: '#BtnAddFloor' });
+                 instructions.push({ action: 'select', selector: `#FloorMat_${rIdx}_${wIdx}`, value: w.material });
+                 instructions.push({ action: 'fill', selector: `#FloorSurf_${rIdx}_${wIdx}`, value: w.surface });
+            });
+        });
+
+        const json = JSON.stringify(instructions, null, 2);
+        document.getElementById('bot-output').value = json;
+        document.getElementById('bot-output').style.display = 'block';
+    }
+
+    init();
+</script>
+</body>
+</html>
